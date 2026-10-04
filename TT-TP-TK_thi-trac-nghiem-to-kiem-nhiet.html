@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thi trắc nghiệm — Tổ trưởng, Tổ phó, Trưởng kíp Tổ Kiểm nhiệt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --ink: #142621;
+    --panel-dark: #0E2A24;
+    --panel-dark-2: #16362E;
+    --paper: #EDEFEA;
+    --paper-2: #FFFFFF;
+    --line: #CBD1C8;
+    --steel: #5C6B64;
+    --amber: #E8A33D;
+    --amber-deep: #C97F1F;
+    --blue: #3E7C9A;
+    --pass: #3F7D5C;
+    --pass-soft: #E4F1E8;
+    --fail: #AF4B36;
+    --fail-soft: #F7E7E1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
+  h1, h2, h3 { font-weight: 700; line-height: 1.2; margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Home button ---------- */
+  .home-btn {
+    position: fixed; top: 16px; left: 16px; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--panel-dark); color: #FFFFFF; text-decoration: none;
+    font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border: none;
+  }
+  .home-btn:hover { background: var(--panel-dark-2); }
+
+  header.top {
+    background: var(--panel-dark);
+    color: #FFFFFF;
+    padding: 60px 20px 34px;
+    text-align: center;
+    border-bottom: 3px solid var(--amber);
+  }
+  header.top .eyebrow { color: var(--amber); font-weight: 600; font-size: 0.88rem; margin-bottom: 10px; }
+  header.top h1 { font-size: clamp(1.5rem, 3.4vw, 2rem); max-width: 30ch; margin: 0 auto; }
+  header.top p { color: #C7D3CC; margin-top: 12px; font-size: 0.95rem; }
+
+  .card {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    padding: 28px 26px;
+    margin-top: -24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen .field { margin-bottom: 18px; }
+  #loginScreen label { display: block; font-size: 0.86rem; font-weight: 600; color: var(--steel); margin-bottom: 6px; }
+  #loginScreen input, #loginScreen select {
+    width: 100%; padding: 11px 13px; font-family: inherit; font-size: 0.98rem;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  #loginScreen input:focus, #loginScreen select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .btn {
+    display: inline-block; padding: 13px 24px; font-weight: 600; font-size: 0.95rem;
+    border: 2px solid transparent; background: var(--amber); color: var(--panel-dark);
+    width: 100%; text-align: center;
+  }
+  .btn:hover { background: var(--amber-deep); }
+  .btn-secondary { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-secondary:hover { border-color: var(--amber); }
+  .form-msg { font-size: 0.86rem; min-height: 1.2em; margin-top: 4px; color: var(--fail); }
+  .level-desc { font-size: 0.82rem; color: var(--steel); margin-top: 6px; }
+
+  /* ---------- Exam screen ---------- */
+  #examScreen { display: none; }
+  .exam-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.86rem; color: var(--steel); margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+  }
+  .exam-meta strong { color: var(--ink); }
+  .exam-meta .timer { font-weight: 700; color: var(--panel-dark); background: var(--paper); border: 1px solid var(--line); padding: 4px 10px; }
+  .exam-meta .timer.low { color: #FFFFFF; background: var(--fail); border-color: var(--fail); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .progress-track { height: 6px; background: var(--paper); border: 1px solid var(--line); margin-bottom: 24px; }
+  .progress-fill { height: 100%; background: var(--amber); transition: width 0.2s ease; }
+
+  .q-tag { color: var(--blue); font-weight: 600; font-size: 0.86rem; margin-bottom: 8px; }
+  .q-text { font-size: 1.08rem; font-weight: 600; margin-bottom: 20px; }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 12px;
+    border: 1px solid var(--line); padding: 13px 16px; cursor: pointer;
+    background: var(--paper-2);
+  }
+  .option:hover { border-color: var(--amber); }
+  .option.selected { border-color: var(--blue); background: #EAF1F4; }
+  .option.locked { opacity: 0.62; cursor: default; }
+  .option.locked:hover { border-color: var(--line); }
+  .option input { margin-top: 3px; accent-color: var(--blue); flex-shrink: 0; }
+  .option span.key { font-weight: 700; text-transform: uppercase; margin-right: 4px; }
+  .locked-note { font-size: 0.82rem; color: var(--fail); margin: -12px 0 16px; font-weight: 600; }
+
+  .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  .nav-row .btn, .nav-row button { flex: 1; }
+
+  .q-dots { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .q-dot {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.76rem; font-weight: 600; border: 1px solid var(--line); background: var(--paper-2);
+    color: var(--steel); cursor: pointer;
+  }
+  .q-dot.answered { background: var(--panel-dark-2); color: #FFFFFF; border-color: var(--panel-dark-2); }
+  .q-dot.current { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+  /* ---------- Results screen ---------- */
+  #resultsScreen { display: none; }
+  .result-banner {
+    text-align: center; padding: 30px 20px; margin-bottom: 24px;
+  }
+  .result-banner.pass { background: var(--pass-soft); border: 1px solid var(--pass); }
+  .result-banner.fail { background: var(--fail-soft); border: 1px solid var(--fail); }
+  .result-banner .verdict { font-size: 1.7rem; font-weight: 700; }
+  .result-banner.pass .verdict { color: var(--pass); }
+  .result-banner.fail .verdict { color: var(--fail); }
+  .result-banner .sub { margin-top: 6px; color: var(--steel); font-size: 0.95rem; }
+
+  .stat-row { display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 28px; }
+  .stat-box { flex: 1; background: var(--paper-2); text-align: center; padding: 18px 10px; }
+  .stat-box .num { font-size: 1.6rem; font-weight: 700; }
+  .stat-box .label { font-size: 0.78rem; color: var(--steel); margin-top: 4px; }
+  .stat-box.correct .num { color: var(--pass); }
+  .stat-box.wrong .num { color: var(--fail); }
+
+  .review-item { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .q-text { font-size: 0.98rem; margin-bottom: 10px; }
+  .review-row { font-size: 0.88rem; margin-bottom: 4px; }
+  .review-row .tag { font-weight: 700; margin-right: 6px; }
+  .review-row.your-wrong .tag { color: var(--fail); }
+  .review-row.correct-answer .tag { color: var(--pass); }
+
+  .result-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .result-actions > * { flex: 1; min-width: 160px; }
+  .save-status { font-size: 0.86rem; color: var(--pass); margin-top: 8px; font-weight: 600; }
+  .save-status.error { color: var(--fail); }
+
+  /* ---------- Admin ---------- */
+  .admin-link-row { text-align: center; margin-top: 18px; }
+  .admin-link-row a { font-size: 0.84rem; color: var(--steel); text-decoration: underline; }
+  #adminLoginScreen, #adminScreen { display: none; }
+  .admin-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .admin-bar .btn-secondary { width: auto; padding: 9px 16px; }
+  .admin-note { font-size: 0.82rem; color: var(--steel); background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; margin-bottom: 20px; }
+  table.admin-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  table.admin-table th, table.admin-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  table.admin-table th { color: var(--steel); font-size: 0.78rem; text-transform: uppercase; }
+  table.admin-table .pass-tag { color: var(--pass); font-weight: 700; }
+  table.admin-table .fail-tag { color: var(--fail); font-weight: 700; }
+  table.admin-table .row-actions button { font-size: 0.78rem; padding: 5px 9px; margin-right: 4px; border: 1px solid var(--line); background: var(--paper-2); }
+  table.admin-table .row-actions button:hover { border-color: var(--amber); }
+  .admin-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+    .nav-row { flex-direction: column; }
+  }
+
+ /* ---------- In kết quả ---------- */
+  .print-meta { display:none; }
+  @media print {
+    .no-print, .home-btn { display: none !important; }
+    #loginScreen, #examScreen, #adminLoginScreen, #adminScreen { display: none !important; }
+    body { background: #fff !important; color:#000 !important; }
+    .card { box-shadow:none !important; border:1px solid #999 !important; }
+    .print-meta { display:block !important; margin-bottom:14px; font-size:13px; color:#444; }
+  }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="index.html" title="Về trang chủ">⌂</a>
+
+<header class="top">
+  <div class="eyebrow">NHÀ MÁY NHIỆT ĐIỆN SÔNG HẬU 1-PVPGB_PX BDSC THI TRẮC NGHIỆM</div>
+  <h1>Đề thi Tổ trưởng, Tổ phó — Tổ Kiểm nhiệt</h1>
+  <p>Đăng nhập họ tên và mật khẩu để bắt đầu làm bài.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card" id="loginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập làm bài</h2>
+    <div class="field">
+      <label for="candName">Họ và tên</label>
+      <input type="text" id="candName" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="candPass">Mật khẩu</label>
+      <input type="password" id="candPass" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label for="candLevel">Chọn bậc thi</label>
+      <select id="candLevel"></select>
+      <div class="level-desc" id="levelDesc"></div>
+    </div>
+    <div class="form-msg" id="loginMsg"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài</button>
+    <div class="admin-link-row"><a href="#" id="adminLoginLink">Quản trị viên (Admin)</a></div>
+  </div>
+
+  <div class="card" id="adminLoginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập Admin</h2>
+    <div class="field">
+      <label for="adminPass">Mật khẩu Admin</label>
+      <input type="password" id="adminPass" autocomplete="off" />
+    </div>
+    <div class="form-msg" id="adminLoginMsg"></div>
+    <button class="btn" id="adminLoginBtn" type="button">Đăng nhập</button>
+    <div class="admin-link-row"><a href="#" id="adminBackLink">← Quay lại đăng nhập thí sinh</a></div>
+  </div>
+
+  <div class="card" id="adminScreen">
+    <div class="admin-bar">
+      <h2>Bảng quản trị — Dữ liệu thí sinh</h2>
+      <button class="btn btn-secondary" id="adminLogoutBtn" type="button">Đăng xuất</button>
+    </div>
+    <div class="admin-note">Dữ liệu này chỉ lưu trên trình duyệt hiện tại (localStorage), không đồng bộ giữa các máy. Đây là quyền quản trị phía trình duyệt, không phải cơ chế bảo mật máy chủ thực sự.</div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Họ tên</th><th>Bậc</th><th>Đúng</th><th>Sai</th><th>Tỷ lệ</th><th>Kết quả</th><th>Thời gian</th><th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="adminTbody"></tbody>
+      </table>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="exportXlsxBtn" type="button">Xuất file Excel (.xlsx)</button>
+      <button class="btn btn-secondary" id="exportCsvBtn" type="button">Tải danh sách (CSV)</button>
+      <button class="btn btn-secondary" id="clearAllBtn" type="button">Xóa toàn bộ dữ liệu</button>
+    </div>
+    <div id="xlsxWarning" class="form-msg" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="examScreen">
+    <div class="exam-meta">
+      <span>Thí sinh: <strong id="metaName"></strong></span>
+      <span>Câu <strong id="metaCurrent"></strong>/<span id="metaTotal"></span></span>
+      <span class="timer" id="timerDisplay">--:--</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="q-tag" id="qTag"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="qOptions"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" id="prevBtn" type="button">← Câu trước</button>
+      <button class="btn btn-secondary" id="nextBtn" type="button">Câu sau →</button>
+    </div>
+
+    <div class="q-dots" id="qDots"></div>
+    <button class="btn" id="submitBtn" type="button" style="margin-top: 10px;">Nộp bài</button>
+  </div>
+
+  <div class="card" id="resultsScreen">
+    <div class="result-banner" id="resultBanner">
+      <div class="verdict" id="resultVerdict"></div>
+      <div class="sub" id="resultSub"></div>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box correct"><div class="num" id="statCorrect"></div><div class="label">Câu đúng</div></div>
+      <div class="stat-box wrong"><div class="num" id="statWrong"></div><div class="label">Câu sai</div></div>
+      <div class="stat-box"><div class="num" id="statPercent"></div><div class="label">Tỷ lệ đúng</div></div>
+    </div>
+    <h3 style="margin-bottom: 14px;">Xem lại các câu sai</h3>
+    <div id="reviewList"></div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="retakeBtn" type="button">Làm lại</button>
+      <button class="btn btn-secondary no-print" id="printResultBtn" type="button">In kết quả</button>
+      <a class="btn" href="index.html" style="text-align:center;">Về trang chủ</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var QUESTIONS = [{"stt":1,"question":"Cho biết µS/cm là đơn vị dùng để đo cho đại lượng vật lý nào?","a":"Đo độ đục của nước","b":"Đo vận tốc","c":"Đo độ dẫn điện của nước","d":"Đo áp suất của nước","correct":"c","level":1},{"stt":2,"question":"Khi khởi động tổ máy đến tốc độ nào đó ví dụ 1500 v/ph, người ta thường giữ cố định một khoảng thời gian (tùy theo tổ máy có thể đến vài giờ) để làm gì?","a":"Chờ cho đủ áp suất và nhiệt độ bên lò cung cấp","b":"Cho tổ máy ổn định trước khi hòa lưới","c":"Để cho xylanh tua bin giản nỡ kịp với rô to tua bin","d":"Tất cả đều đúng.","correct":"c","level":1},{"stt":3,"question":"Giản nở sai biệt của tua bin hơi quá lớn (vượt giới hạn) có thể xảy ra hiện tượng nào sau đây?","a":"Hư hỏng tua bin","b":"Gây ra sự cố cho tổ máy","c":"Cánh động của rô to chạm vào cánh tĩnh lắp cố định trên xy lanh, gây hư hỏng nặng","d":"Chỉ cảnh báo cho biết không ảnh hưởng vận hành tổ máy","correct":"c","level":1},{"stt":4,"question":"Nhà máy SH1 có mấy loại cảm biến độ rung được sử dụng để giám sát và bảo vệ độ rung tua bin & máy phát?","a":"2","b":"3","c":"4","d":"1","correct":"a","level":1},{"stt":5,"question":"Để vệ sinh đầu cảm biến bị dính cáu cặn của thiết bị đo mẫu nước online dùng dung dịch gì?","a":"Cồn","b":"Amoniac","c":"HCl pha loãng","d":"HCl đậm đặc","correct":"c","level":1},{"stt":6,"question":"Sự cần thiết phải bảo vệ lò hơi?","a":"Lò hơi là một trong những thiết bị chính trong dây chuyền sản xuất điện","b":"Lò hơi là một tổ hợp rất phức tạp đắt tiền có vai trò quyết định trong vận hành an toàn, liên tục và kinh tế của nhà máy","c":"Lò hơi làm việc trong điều kiện, nhiệt độ cao, áp suất cao, dễ hư hỏng nên cần phải có sự giám sát và bảo vệ chặt chẽ","d":"Cả 1, 2 & 3.","correct":"d","level":1},{"stt":7,"question":"Trong mạch tạo xung đa hài tự kích dùng transistor, nếu thay đổi hai điện trở R1 và R2 bằng hai đèn Led thì hiện tượng gì sẽ xảy ra?","a":"Mạch sẽ không hoạt động được nữa","b":"Xung ra không còn đối xứng nữa","c":"Các đèn Led sẽ luân phiên chớp, tắt","d":"Các transistor sẽ hỏng.","correct":"c","level":1},{"stt":8,"question":"Một điện trở có các vòng màu theo thứ tự: tím-đen-trắng- đỏ, trị số của điện trở là?","a":"70 x103 MΩ ± 2%","b":"70 x 109 MΩ ± 20%","c":"70 x103 MΩ ± 10%","d":"70 x103 MΩ ± 5%.","correct":"a","level":1},{"stt":9,"question":"Ý nghĩa của trị số điện trở?","a":"Cho biết mức độ cản trở dòng điện của điện trở","b":"Cho biết mức độ chịu đựng của điện trở","c":"Cho biết khả năng phân chia điện áp của điện trở","d":"Cho biết khả năng hạn chế điện áp trong mạch điện.","correct":"a","level":1},{"stt":10,"question":"Trong Nhà máy SH1 mỗi khi servo valve hỏng hoặc hoạt động không ổn định, bộ phận sửa chữa thường làm gì?","a":"Tháo kiểm tra, sửa chữa","b":"Cân chỉnh lại","c":"Cả 1 & 2","d":"Thay servo valve mới","correct":"d","level":1},{"stt":11,"question":"Mỗi Tua bin bơm cấp sử dụng mấy servo valve?","a":"1","b":"2","c":"3","d":"4","correct":"a","level":1},{"stt":12,"question":"Servo valve sử dụng trong Nhà máy SH1 là loại có mấy cuộn dây?","a":"1","b":"2","c":"3","d":"4","correct":"b","level":1},{"stt":13,"question":"Để đảm bảo servo valve làm việc bình thường người ta lắp thêm bộ phận nào sau đây?","a":"Bộ lọc dầu","b":"Bộ đo sai áp","c":"Bộ chia áp","d":"Tất cả đều sai","correct":"a","level":1},{"stt":14,"question":"Về nguyên lý hoạt động servo van dựa theo nguyên lý nào sau đây?","a":"Nguyên lý vòi phun lá chắn (Double Flapper Nozzle)","b":"Nguyên lý cân bằng lực","c":"Nguyên lý ống phun (Jet pipe)","d":"Cả 1 & 3","correct":"d","level":1},{"stt":15,"question":"Về cấu tạo servo valve gồm mấy phần chính?","a":"2","b":"3","c":"4","d":"5","correct":"b","level":1},{"stt":16,"question":"Bộ chuyển tín chênh áp có giá trị cần hiệu chỉnh là 100mmH2O. Khi hiệu chỉnh chênh áp bằng ống thủy thì mức nước chênh nhau bao nhiêu mmH2O?","a":"25mmH2O","b":"50mmH2O","c":"100mmH2O","d":"200mmH2O","correct":"c","level":1},{"stt":17,"question":"Cách đo để xác định cuộn dây soilenoid hỏng là?","a":"Đo điện trở cuộn dây","b":"Đo dòng điện cuộn dây","c":"Đo điện áp cuộn dây","d":"Đo điện dung cuộn dây","correct":"c","level":1},{"stt":18,"question":"Cho biết chuẩn mẫu thường dùng để hiệu chuẩn thiết bị đo Silica của mẫu nước online?","a":"10 ppb","b":"50 ppb","c":"5 ppb","d":"100 ppb","correct":"d","level":1},{"stt":19,"question":"Cho biết chuẩn mẫu thường dùng để hiệu chuẩn thiết bị đo độ đục của mẫu nước online?","a":"0 và 10 NTU","b":"3 và 5 NTU","c":"10 và 100 NTU","d":"100 và 150 NTU","correct":"c","level":1},{"stt":20,"question":"Cho biết chuẩn mẫu thường dùng để hiệu chuẩn thiết bị đo Natri của mẫu nước online?","a":"0 và 10 µg/kg","b":"3 và 5 µg/kg","c":"10 và 100 µg/kg","d":"100 và 150 µg/kg","correct":"c","level":1},{"stt":21,"question":"Thiết bị đo nhiệt độ sử dụng trong cảm biến đo độ dẫn?","a":"Nhiệt kế thủy ngân","b":"Cặp nhiệt TC","c":"Nhiệt kế rượu","d":"Nhiệt điện trở RTD","correct":"d","level":1},{"stt":22,"question":"Cho biết đơn vị đo Natri của mẫu nước online?","a":"mg/l","b":"ppb","c":"µg/l","d":"µg/kg.","correct":"d","level":1},{"stt":23,"question":"Cho biết đơn vị đo Oxy của mẫu nước online?","a":"mg/l","b":"µS/cm","c":"ppb","d":"µg/kg","correct":"c","level":1},{"stt":24,"question":"Cho biết đơn vị đo độ đục của mẫu nước online?","a":"mg/l","b":"NTU","c":"µS/cm","d":"µg/kg","correct":"b","level":2},{"stt":25,"question":"Cho biết đơn vị đo độ dẫn của mẫu nước online?","a":"mg/l","b":"µg/kg","c":"µS/cm.","d":"ppb.","correct":"c","level":2},{"stt":26,"question":"Bộ định vị Fisher trong quá trình calib auto thì hành trình set các điểm của van là?","a":"0%, 45%, 100%","b":"0%, 50%, 100%","c":"100%, 50%, 0%","d":"100%, 0%, 50%.","correct":"d","level":2},{"stt":27,"question":"Trình bày cách cài đặt switch tác động mở khi van auma ở vị trí trung gian?","a":"Di chuyển van đến vị trí trung gian thông qua nút ấn hoặc điều khiển bằng tay","b":"Ấn và xoay điểm K theo chiều mũi tên đến khi điểm L chạm điểm F thì dừng","c":"Ấn và xoay điểm G theo chiều mũi tên đến khi điểm L vượt qua điểm F thì dừng","d":"Cả 2 câu 1 và 2.","correct":"d","level":2},{"stt":28,"question":"Trình bày cách cài đặt switch tác động đóng khi van auma ở vị trí trung gian.?","a":"Ấn và xoay điểm G theo chiều mũi tên đến khi điểm H chạm điểm C thì dừng.","b":"Ấn và xoay điểm G theo chiều mũi tên đến khi điểm H vượt qua điểm C thì dừng.","c":"Cả 2 câu 1 và 2","d":"Tất cả các câu trên.","correct":"a","level":2},{"stt":29,"question":"Trình bày cách kiểm tra công tắc giới hạn mở van auma?","a":"Xoay nút P theo chiều ngược mũi tên LSO để tác động công tắc giới hạn (OPEN)","b":"Xoay nút P theo chiều mũi tên LSO để tác động công tắc giới hạn (OPEN)","c":"Xoay nút P theo chiều mũi tên LSO để tác động công tắc giới hạn (CLOSE)","d":"Xoay nút P theo chiều ngược mũi tên LSO để tác động công tắc giới hạn (CLOSE)","correct":"b","level":2},{"stt":30,"question":"Trình bày cách cài đặt hành trình mở van auma?","a":"Vặn núm về vị trí local, quay tay theo chiều ngược kim đồng hồ cho đến khi đóng hết (quay ngược lại ½ vòng)","b":"Ấn và xoay trục quay D theo chiều mũi tên, cho đến khi điểm E chạm đến điểm F thì dừng","c":"Ấn và xoay trục quay D theo chiều mũi tên, cho đến khi điểm E vượt qua điểm F thì dừng","d":"Cả 2 câu 1 và 2.","correct":"d","level":2},{"stt":31,"question":"Trình bày cách cài đặt hành trình đóng van auma?","a":"Vặn núm về vị trí local, quay tay theo chiều kim đồng hồ cho đến khi đóng hết (quay ngược lại ½ vòng)","b":"Ấn và xoay trục quay A theo chiều mũi tên, cho đến khi điểm B chạm đến điểm C thì dừng","c":"Ấn và xoay trục quay A theo chiều mũi tên, cho đến khi điểm B vượt qua điểm C thì dừng","d":"Cả 2 câu 1 và 2.","correct":"d","level":2},{"stt":32,"question":"Ngoài những bảo vệ bản thể Tua & máy phát, Tua bin còn trip trong các trường hợp nào sau đây?","a":"Tip EDH","b":"MFT tác động","c":"Trip Máy phát","d":"Cả 1, 2 & 3.","correct":"d","level":2},{"stt":33,"question":"Để vệ sinh đầu cảm biến của thiết bị đo mẫu nước online thông thường dùng loại gì ?","a":"Cồn","b":"Nước Demin","c":"Amoniac","d":"HCl đậm đặc","correct":"b","level":2},{"stt":34,"question":"Sử dụng công cụ nào sau đây để kiểm tra đánh giá độ chính xác, chất lượng của cảm biến rung tuyệt đối tốt nhất?","a":"VOM Digital Multimeter","b":"Victor 25 Multi-function Process Calibrator","c":"Emerson Hart 475 Field Communicator","d":"9110D Portable Vibration Calibrator","correct":"d","level":2},{"stt":35,"question":"Có bao nhiêu cảm biến LVDT sử dụng cho van chặn (MSV1,2) đường hơi chính tua- bin tổ máy S1 thuộc tổ máy Sông Hậu 1?","a":"1","b":"2","c":"3","d":"4","correct":"d","level":2},{"stt":36,"question":"Khoảng đo nhiệt độ của Thermocouple loại K là bao nhiêu °C?","a":"-270 đến 1000","b":"-210 đến 1200","c":"-270 đến 400","d":"-270 đến 1372","correct":"d","level":2},{"stt":37,"question":"Gọi R là giá trị điện trở đo được (Ω), Ro là giá trị điện trở tại nhiệt độ To (°C), α là hệ số nhiệt của kim loại (Ω/Ω/°C ). Công thức tính nhiệt độ tương đối đúng của nhiệt điện trở Pt100 (Platinum (European, DIN43760): 0.00385 Ω/Ω/°C ) là?","a":"R = Ro*[1 +α*(T-To)]","b":"T = (R-Ro)/0.385","c":"T = (R-Ro)/0.385 + 25","d":"T = (R-Ro)/0.00385 + 25","correct":"a","level":2},{"stt":38,"question":"Trong các loại cảm biến đo nhiệt độ Thermocouple, RTD, Thermistor, I.C.Sensor, loại nào đo được dãy nhiệt độ cao nhất?","a":"RTD","b":"Thermocouple","c":"Thermistor","d":"I.C.Sensor","correct":"b","level":2},{"stt":39,"question":"Trong các loại cảm biến nhiệt độ dạng điện trở Pt100, Pt500, Pt1000, loại nào có độ chính xác cao nhất","a":"Pt100","b":"Pt1000","c":"Pt500","d":"Không chọn loại nào","correct":"b","level":2},{"stt":40,"question":"Gọi R là giá trị điện trở đo được (Ω), Ro là giá trị điện trở tại nhiệt độ To (°C), α là hệ số nhiệt của kim loại (Ω/Ω/°C ). Công thức tính nhiệt độ tương đối đúng của nhiệt điện trở Pt1000 (Platinum (European, DIN43760): 0.00385 Ω/Ω/°C ) là?","a":"R = Ro*[1 +α*(T-To)]","b":"T = (R-Ro)/0.0385 + 250","c":"T = (R-Ro)/3.85","d":"T = (R-Ro)/0.00385 + 250","correct":"a","level":2},{"stt":41,"question":"Loại Thermocouple được sử dụng nhiều nhất trong nhà máy Sông Hậu 1 thuộc loại nào?","a":"Loại E","b":"Loại J","c":"Loại T","d":"Loại K","correct":"d","level":2},{"stt":42,"question":"Đơn vị µS/cm là viết tắt của từ nào sau đây?","a":"Microsecond/centimet","b":"Microseimens/centimet","c":"Millisiemens/centimet","d":"Microsiemens/centimet","correct":"d","level":2},{"stt":43,"question":"Độ dãn nở sai biệt (differential expansion) của tua bin hơi là sự sai biệt giữa:?","a":"Vỏ tua bin và không khí.","b":"Vỏ tua bin và rôto tua bin.","c":"Xy lanh tua bin và rô to tua bin.","d":"Rô to tua bin và không khí.","correct":"c","level":2},{"stt":44,"question":"Nhiệm vụ của mạch bảo vệ di trục Tua bin?","a":"Ngăn ngừa Tua bin di trục quá giới hạn","b":"Bảo đảm an toàn cho Tua bin","c":"Tăng độ tin cậy của Tua bin","d":"Tránh hư hỏng lớn cho Tua bin khi chắn di trục chính bị hỏng","correct":"d","level":2},{"stt":45,"question":"Các cảm biến đo độ rung tại mỗi gối trục Tua bin & Máy phát Nhà máy DH1, 3 bao gồm?","a":"Hai cảm biến đo trục, hai cảm biến đo vỏ","b":"Hai cảm biến đo vỏ, một cảm biến đo trục","c":"Một cảm biến đo vỏ, một cảm biến đo trục","d":"Một cảm biến đo vỏ, hai cảm biến đo trục","correct":"d","level":2},{"stt":46,"question":"Các cảm biến đo di trục Tua bin có nhiệm vụ?","a":"Đo độ di trục của Tua bin trong vận hành","b":"Giám sát độ di trục của Tua bin từ DCS","c":"Đo, truyền tín hiệu chỉ thị độ di trục trong vận hành và gửi tín hiệu đến mạch bảo vệ Tua bin","d":"Đo, truyền tín hiệu và điều khiển Tua bin.","correct":"c","level":2},{"stt":47,"question":"Khi lắp cảm biến rung đo trục Tua bin & Máy phát, nếu chỉnh khe hở giữa cảm biến và trục càng lớn thì?","a":"Độ nhạy càng tăng","b":"Độ nhạy càng giảm","c":"Không ảnh hưởng giữa khe hở và độ nhạy","d":"Độ nhạy không đổi","correct":"b","level":3},{"stt":48,"question":"Trình bày cách kiểm tra công tắc giới hạn đóng van auma?","a":"Xoay nút T theo chiều ngược mũi tên LSC để tác động công tắc giới hạn (OPEN)","b":"Xoay nút T theo chiều mũi tên LSC để tác động công tắc giới hạn (OPEN)","c":"Xoay nút T theo chiều mũi tên LSC để tác động công tắc giới hạn (CLOSE)","d":"Xoay nút T theo chiều ngược mũi tên LSC để tác động công tắc giới hạn (CLOSE)","correct":"c","level":3},{"stt":49,"question":"Cách reset bộ định vị khí nén ABB dòng TZIDC?","a":"Nhấn giữ 4 phím Enter, Mode, ▲ (phím lên),▼ (phím xuống) trong 3 giây","b":"Nhấn giữ 2 phím Enter, Mode trong 3 giây","c":"Nhấn giữ 2 phím ▲ (phím lên),▼ (phím xuống) trong 3 giây","d":"Nhấn giữ 3 phím Enter, Mode, ▲ (phím lên) trong 3 giây","correct":"a","level":3},{"stt":50,"question":"Cho biết đơn vị đo Silica của mẫu nước online?","a":"µg/kg","b":"ppb","c":"NTU","d":"mg/l","correct":"b","level":3},{"stt":51,"question":"Chức năng của cổng đệm?","a":"Như một mạch khuếch đại logic","b":"Như một mạch đệm áp","c":"Tín hiệu qua cổng đệm không làm thay đổi trạng thái logic","d":"Cả 1 & 3","correct":"d","level":3},{"stt":52,"question":"Trong mạch tạo xung đa hài tự kích dùng transistor, để có xung đa hài đối xứng ta cần phải làm gì?","a":"Chỉ cần chọn hai tụ điện có điện dung bằng nhau","b":"Chỉ cần chọn các điện trở có trị số bằng nhau","c":"Chọn các transistor, điện trở và tụ điện giống nhau","d":"Chọn các transistor và tụ điện có thông số giống nhau","correct":"c","level":3},{"stt":53,"question":"Trong mạch tạo xung đa hài tự kích dùng transistor, để tăng chu kỳ của xung thì phương án tốt nhất là?","a":"Tăng trị số các điện trở","b":"Tăng điện dung của các tụ điện","c":"Giảm điện dung của các tụ điện","d":"Giảm trị số các điện trở","correct":"b","level":3},{"stt":54,"question":"Trong mạch tạo xung đa hài tự kích dùng transistor, sự thông- khóa của hai transistor T1 và T2 là do?","a":"Sự điều khiển của nguồn điện cung cấp cho mạch","b":"Sự phóng & nạp của hai tụ C1, C2","c":"Sự điều khiển của hai điện trở R1, R2","d":"Sự điều khiển của hai điện trở R3, R4.","correct":"b","level":3},{"stt":55,"question":"Chức năng của mạch tạo xung?","a":"Biến đổi tín hiệu điện một chiều thành tín hiệu điện có xung và tần số theo yêu cầu","b":"Biến đổi tín hiệu điện xoay chiều thành tín hiệu điện có xung và tần số theo yêu cầu","c":"Biến đổi tín hiệu điện một chiều thành tín hiệu điện có sóng và tần số theo yêu cầu","d":"Biến đổi tín hiệu điện xoay chiều thành tín hiệu điện không có tần số>","correct":"a","level":3},{"stt":56,"question":"Để thay đổi hệ số khuếch đại của mạch khuếch đại điện áp dùng OA, ta làm thế nào?","a":"Chỉ cần thay đổi giá trị của điện trở hồi tiếp (Rht)","b":"Thay đổi biên độ điện áp vào","c":"Thay đổi tần số điện áp vào","d":"Tăng giá trị điện trở R1 và Rht lên gấp đôi","correct":"d","level":3},{"stt":57,"question":"IC khuếch đại thuật toán có bao nhiêu đầu vào và ra?","a":"Một đầu vào hai đầu ra","b":"Một đầu vào một đầu ra","c":"Hai đầu vào hai đầu ra","d":"Hai đầu vào một đầu ra.","correct":"d","level":3},{"stt":58,"question":"Trong mạch khuếch đại điện áp dùng OA (Operational amplifier), tín hiệu ra và tín hiệu vào luôn?","a":"Cùng dấu và cùng pha nhau","b":"Ngược dấu và cùng pha nhau","c":"Cùng dấu và ngược pha nhau","d":"Ngược dấu và ngược pha nhau.","correct":"d","level":3},{"stt":59,"question":"Thông thường chân các IC khuếch đại thuật toán được bố trí theo kiểu hình răng lược và có?","a":"Một hàng chân","b":"Hai hàng chân","c":"Một hoặc hai hàng chân","d":"Một hoặc ba hàng chân","correct":"c","level":3},{"stt":60,"question":"Cấu tạo của Triac gồm?","a":"Gồm 2 Thyristor mắc song song cùng chiều, có thể dẫn điện theo 2 chiều","b":"Gồm 2 Thyristor mắc song song ngược chiều, có thể dẫn điện theo 2 chiều","c":"Gồm 2 Thyristor mắc nối tiếp cùng chiều, có thể dẫn điện theo 2 chiều","d":"Gồm 2 Thyristor mắc nối tiếp ngược chiều, có thể dẫn điện theo 2 chiều","correct":"b","level":3},{"stt":61,"question":"Một điện trở có các vòng màu theo thứ tự: cam-vàng-xanh lục- kim nhủ, trị số của điện trở là?","a":"34 x 106 Ω ± 0.5%","b":"34 x 102 kΩ ± 5%","c":"23 x 102 kΩ ± 5%","d":"23 x 102 kΩ ± 0.5%.","correct":"b","level":3},{"stt":62,"question":"Phương pháp đo nhiệt độ dựa trên các đặc điểm vật lý nào?","a":"Sự giãn nở của vật liệu theo nhiệt độ tạo ra sự thay đổi về chiều dài, thể tích hay áp suất","b":"Sự thay đổi nhiệt độ ở điểm tiếp xúc giữa hai kim loại khác nhau được dùng trong cặp nhiệt điện","c":"Sự thay đổi điện trở theo nhiệt độ, được sử dụng trong các nhiệt điện trở","d":"Cả 1, 2, 3 đều đúng","correct":"d","level":3},{"stt":63,"question":"Thyristor sẽ ngưng dẫn khi?","a":"UAK > 0","b":"UAK < 0","c":"UGK ≤ 0","d":"UAK ≤ 0.","correct":"c","level":3},{"stt":64,"question":"Quang điện trở khi ánh sáng rọi vào thì trị số điện trở sẽ?","a":"Tăng","b":"Giảm","c":"Không đổi","d":"Giảm rồi tăng lại.","correct":"b","level":3},{"stt":65,"question":"Để xác định cực B của Transistor ta dùng VOM đo mấy lần.?","a":"1","b":"2","c":"3","d":"4","correct":"b","level":3},{"stt":66,"question":"Trong mạch ổn áp dùng diode zener, diode zener được lắp như thế nào?","a":"Mắc diode nối tiếp với tải","b":"Mắc diode song song với tải và chịu điện áp ngược","c":"Mắc diode song song với tải và chịu điện áp thuận","d":"Mắc diode nối tiếp với tải và chịu điện áp ngược.","correct":"b","level":3},{"stt":67,"question":"Mạch chỉnh lưu cầu tương đương với nguồn một chiều có cực dương luôn nằm về phía?","a":"Catot của hai diode","b":"Anot của hai diode","c":"Catot của bốn diode","d":"Anot của bốn diode.","correct":"a","level":3},{"stt":68,"question":"Mạch chỉnh lưu cầu xử dụng bao nhiêu diode?","a":"1","b":"2","c":"3","d":"4","correct":"d","level":3},{"stt":69,"question":"Mạch chỉnh lưu hai nửa chu kỳ xử dụng bao nhiêu diode?","a":"1","b":"2","c":"3","d":"4","correct":"b","level":3},{"stt":70,"question":"Chức năng của mạch chỉnh lưu là?","a":"Ổn định dòng và điện áp một chiều","b":"Ổn định điện áp xoay chiều","c":"Biến đổi dòng điện xoay chiều thành dòng điện một chiều","d":"Biến đổi dòng điện một chiều thành dòng điện xoay chiều","correct":"c","level":4},{"stt":71,"question":"Điểm khác biệt của diode zener so với diode chỉnh lưu?","a":"Chịu được điện áp ngược cao hơn mà không bị đánh thủng","b":"Không bị đánh thủng khi phân cực ngược","c":"Bị đánh thủng mà không hỏng","d":"Chỉ cho dòng điện chạy qua theo một chiều từ A sang K","correct":"c","level":4},{"stt":72,"question":"Loại tụ điện nào không thể mắc được vào mạch điện xoay chiều?","a":"Tụ xoay","b":"Tụ giấy","c":"Tụ gốm.","d":"Tụ phân cực","correct":"d","level":4},{"stt":73,"question":"Khi ta ghép song song hai điện trở có giá trị bằng nhau, ta sẽ được một điện trở tương đương có trị số?","a":"Tăng gấp đôi","b":"Tăng theo một trị số nào đó","c":"Giảm một nửa","d":"Giảm theo một trị số nào đó.","correct":"c","level":4},{"stt":74,"question":"Mạch số có ưu điểm gì so với mạch tương tự?","a":"Dễ phân tích, thiết kế; dễ chế tạo thành mạch tích hợp","b":"Hoạt động theo chương trình lập sẵn","c":"Ít bị ảnh hưởng của nhiễu","d":"Cả 1, 2 & 3.","correct":"d","level":4},{"stt":75,"question":"Tín hiệu tương tự và tín hiệu số khác nhau ở những điểm nào?","a":"Tương tự là tín hiệu có biên độ liên tục theo thời gian; Số là tín hiệu dạng xung gián đoạn về thời gian, biên độ chỉ có hai mức cao và thấp","b":"Tín hiệu tương tự có thể dòng, áp,.. ; tín hiệu số chỉ có mức áp","c":"Khác nhau về tên gọi","d":"Cả 1 & 2.","correct":"d","level":4},{"stt":76,"question":"Trên một tụ điện có ghi 474K, giá trị điện dung của tụ điện là?","a":"47 x 104μF sai số 10%","b":"47 x 104pF sai số 5%","c":"47 x 104pF sai số 10%","d":"47 x 104μF sai số 5%.","correct":"c","level":4},{"stt":77,"question":"Khi chỉnh limit switch phía đóng (Close) của van Enertork, trục chỉnh S cần xoay theo hướng nào ban đầu?","a":"Thuận chiều kim đồng hồ","b":"Ngược chiều kim đồng hồ","c":"Không cần xoay","d":"Xoay ngẫu nhiên","correct":"b","level":4},{"stt":78,"question":"Trong van Enertork Torque switch có chức năng chính là gì?","a":"Đo vị trí van","b":"Bảo vệ motor khỏi quá nhiệt","c":"Dừng motor khi lực vượt giá trị cài đặt","d":"Điều khiển tốc độ","correct":"c","level":4},{"stt":79,"question":"Trong van Enertork khi cần chỉnh torque switch, thao tác đúng là","a":"Dùng tua vít dẹt xoay trực tiếp","b":"Dùng tua vít bake nới vít rồi chỉnh pointer","c":"Dùng cờ lê xoay trục","d":"Không cần dụng cụ","correct":"b","level":4},{"stt":80,"question":"Trong van Enertork Nếu đấu sai thứ tự pha, hiện tượng nào có thể xảy ra?","a":"Van chạy nhanh hơn","b":"Van không chạy","c":"Quay ngược chiều gây hỏng thiết bị","d":"Không ảnh hưởng","correct":"c","level":4},{"stt":81,"question":"Trong van Enertork Khi chuyển sang chế độ vận hành bằng tay, cần đặt mode selector ở vị trí nào?","a":"REM","b":"OFF hoặc LOC","c":"AUTO","d":"RUN","correct":"c","level":4},{"stt":82,"question":"Trong quá trình chạy thử van Enertork, van vừa chạm vị trí đóng nhưng motor vẫn tiếp tục chạy và gây quá lực. Nguyên nhân khả năng cao nhất là gì?","a":"Sai chiều quay motor","b":"Chưa cài limit switch","c":"Torque switch đặt quá cao hoặc chưa kích hoạt","d":"Mất nguồn điều khiển","correct":"c","level":4},{"stt":83,"question":"Khi hiệu chỉnh van Enertork tín hiệu phản hồi 4–20mA, bạn đo được giá trị tại vị trí đóng là 6mA. Cách xử lý đúng là:","a":"Không cần chỉnh","b":"Điều chỉnh zero (potentiometer) về 4mA","c":"Điều chỉnh span","d":"Thay transmitter","correct":"b","level":4},{"stt":84,"question":"Trong quá trình vận hành, van enertork thường xuyên báo lỗi torque dù van không bị kẹt. Nguyên nhân là:","a":"Limit switch sai","b":"Torque switch cài quá thấp","c":"Sai pha nguồn","d":"Mất tín hiệu điều khiển","correct":"b","level":4},{"stt":85,"question":"Nhà máy nhiệt điện Sông Hậu 1 Lò hơi siêu tới hạn làm việc ở áp suất:","a":"<100 bar","b":"150 bar","c":">221 bar","d":"50 bar","correct":"c","level":4},{"stt":86,"question":"NOx hình thành nhiều khi:","a":"Nhiệt độ thấp","b":"Thiếu oxy","c":"Nhiệt độ cao và dư oxy","d":"Áp suất thấp","correct":"c","level":4},{"stt":87,"question":"Khi vận hành lò hơi nhà máy nhiệt điện Sông Hậu 1 áp suất âm buồng đốt tăng cao gây:","a":"Giảm nhiệt độ khói","b":"Tăng nhiệt độ hơi quá nhiệt","c":"Giảm tiêu hao điện quạt khói","d":"Giảm tốc độ khói","correct":"c","level":4},{"stt":88,"question":"Nguyên nhân tăng nhiệt độ khói ở nhà máy nhiệt điện Sông Hậu 1:","a":"Tâm cháy thấp","b":"Trao đổi nhiệt kém","c":"Gió thấp","d":"Than ẩm thấp","correct":"b","level":4},{"stt":89,"question":"Điện trở tối thiểu để giao tiếp HART là:","a":"100 Ω","b":"150 Ω","c":"250 Ω","d":"500 Ω","correct":"c","level":4},{"stt":90,"question":"Transmitter áp suất 2051 kí hiệu PV là viết tắt của:","a":"Pressure Value","b":"Process Variable","c":"Primary Voltage","d":"Process Voltage","correct":"b","level":4},{"stt":91,"question":"Chức năng Zero trim transmitter 2051 dùng để:","a":"Chỉnh span","b":"Chỉnh điểm 0","c":"Tăng áp","d":"Reset thiết bị","correct":"b","level":4},{"stt":92,"question":"Chức năng Loop test transmitter 2051 dùng để:","a":"Kiểm tra sensor","b":"Kiểm tra tín hiệu vòng","c":"Reset","d":"Cài đặt","correct":"b","level":4},{"stt":93,"question":"Chức năng Simulation dùng để:","a":"Hiệu chuẩn","b":"Reset","c":"Tắt máy","d":"Giả lập tín hiệu","correct":"d","level":5},{"stt":94,"question":"Chức năng Scaled Variable trong transmitter 2051 dùng để:","a":"Hiển thị tùy chỉnh","b":"Chuyển đổi đơn vị","c":"Điều khiển output","d":"Tất cả","correct":"d","level":5},{"stt":95,"question":"Ưu điểm chính của hệ thống truyền động thủy lực so với truyền động cơ khí là gì?","a":"Không bao giờ xảy ra rò rỉ","b":"Chi phí thấp hơn mọi hệ thống khác","c":"Truyền được công suất cao và lực lớn với kết cấu đơn giản","d":"Không gây tiếng ồn khi làm việc","correct":"c","level":5},{"stt":96,"question":"Theo tài liệu, hệ thống thủy lực dễ dàng thực hiện việc đề phòng quá tải nhờ vào phần tử nào?","a":"Áp kế","b":"Bơm thủy lực","c":"xilanh thủy lực","d":"Van an toàn","correct":"d","level":5},{"stt":97,"question":"Nhược điểm nào sau đây làm giảm hiệu suất của hệ thống điều khiển thủy lực?","a":"Tính chịu nén của dầu","b":"Quán tính nhỏ của động cơ thủy lực","c":"Mất mát trong đường ống dẫn và rò rỉ bên trong","d":"Sử dụng các phần tử tiêu chuẩn hóa","correct":"c","level":5},{"stt":98,"question":"Đơn vị cơ bản của áp suất theo hệ đo lường SI là gì?","a":"Psi","b":"Bar","c":"At (Atmospheric)","d":"Pascal (Pa)","correct":"d","level":5},{"stt":99,"question":"Trong công thức tính áp suất thủy tĩnh P = S h .g.p+PL ký hiệu P đại diện cho đại lượng nào?","a":"Chiều cao cột nước","b":"Gia tốc trọng trường","c":"áp suất khí quyển","d":"Khối lượng riêng của chất lỏng","correct":"d","level":5},{"stt":100,"question":"Tại sao vận tốc làm việc của hệ thống thủy lực có thể thay đổi khi mới khởi động?","a":"Do đường ống dẫn bị co lại","b":"Do áp suất khí quyển thay đổi","c":"Do độ nhớt của chất lỏng thay đổi theo nhiệt độ","d":"do van an toàn bị kẹt","correct":"c","level":5},{"stt":101,"question":"Giá trị áp suất 1 bar tương đương với khoảng bao nhiêu kp/cm2?","a":"14,5 kp/cm2","b":"100 kp/cm2","c":"1,02 kp/cm2","d":"0,02 kp/cm2","correct":"c","level":5},{"stt":102,"question":"Trong phương trình Bernoulli, đại lượng P.v2/2 đại diện cho loại áp suất nào?","a":"Áp suất thủy động","b":"Áp suất thủy tĩnh","c":"Áp suất dư","d":"Áp suất khí quyển","correct":"a","level":5},{"stt":103,"question":"Khi nhiệt độ dầu thủy lực tăng quá cao, hiện tượng nào sau đây sẽ xảy ra gây hại cho hệ thống?","a":"Dầu sẽ bị đông đặc lại","b":"Độ nhớt giảm dẫn đến rò rỉ nội bộ tăng và giảm khả năng bôi trơn","c":"Áp suất hệ thống sẽ tăng vọt không kiểm soát","d":"Độ nhớt tăng làm hệ thống khó khởi động","correct":"b","level":5},{"stt":104,"question":"Tại sao trong các hệ thống thủy lực áp suất cao, người ta thường ưu tiên dùng bơm piston hơn bơm bánh răng?","a":"Vì bơm piston có hiệu suất thể tích cao và chịu được áp suất rất lớn","b":"Vì bơm piston tạo ra dòng chảy đều hơn bơm bánh răng","c":"Vì bơm piston rẻ tiền hơn","d":"Vì bơm piston không cần dầu bôi trơn","correct":"a","level":5},{"stt":105,"question":"Công suất thủy lực của một hệ thống được tính bằng biểu thức nào (bỏ qua tổn thất)?","a":"N=F.p","b":"N=Q.v","c":"N=p/Q","d":"N=p.Q","correct":"d","level":5},{"stt":106,"question":"Van tiết lưu trong hệ thống thủy lực có chức năng chính là gì?","a":"Giới hạn áp suất tối đa để bảo vệ hệ thống","b":"Điều chỉnh vận tốc của cơ cấu chấp hành bằng cách thay đổi lưu lượng","c":"Ngăn không cho dầu chảy ngược lại","d":"Đảo chiều dòng chuyển động của cơ cấu chấp hành","correct":"b","level":5},{"stt":107,"question":"Sự khác biệt cơ bản giữa van tràn (relief valve) và van giảm áp (pressure reducing valve) là gì?","a":"van tràn chỉ dùng cho khí nén, van giảm áp chỉ dùng cho thủy lực","b":"Chúng hoàn toàn giống nhau về cấu tạo và chức năng","c":"Van tràn điều chỉnh áp suất ở của ra, van giảm áp điều chỉnh ở cửa vào","d":"van tràn bảo vệ hệ thống khỏi quá áp, van giảm áp duy trì áp suất thấp hơn áp suất nguồn ở một nhánh mạch","correct":"d","level":5},{"stt":108,"question":"Ký hiệu '4/3' trên một van đảo chiều có ý nghĩa gì?","a":"Lưu lượng của van là 4,3 lít/phút","b":"Van có 4 cửa và 3 vị trí làm việc","c":"Van có thể chịu được áp suất 43 bar","d":"Van có 4 vị trí và 3 cửa dầu","correct":"b","level":5},{"stt":109,"question":"Trong các cơ cấu chấp hành, 'motor thủy lực' khác với 'xilanh thủy lực' ở điểm nào?","a":"Motor dùng dầu, xilanh dùng khí nén","b":"Motor không cần áp suất để hoạt động","c":"Motor tạo ra chuyển động tịnh tiến, xilanh tạo ra chuyển động quay","d":"Motor tạo ra chuyển động quay liên tục, xilanh tạo ra chuyển động tịnh tiến (thẳng)","correct":"d","level":5},{"stt":110,"question":"Radar báo mức không ổn định trong silo than có nhiều kết cấu thép. Cách xử lý tốt nhất:","a":"Thay sensor","b":"Mapping nhiễu","c":"Tăng nguồn","d":"Reset","correct":"b","level":5},{"stt":111,"question":"Loại tụ điện nào chỉ sử dụng cho điện một chiều và phải mắc đúng cực?","a":"Tụ xoay","b":"Tụ giấy","c":"Tụ hóa","d":"Tụ gốm","correct":"c","level":5},{"stt":112,"question":"Khi thyristor đã dẫn thì nó làm việc như một diode và sẽ ngưng dẫn khi?","a":"UAK ≤ 0","b":"UGK ≤ 0","c":"UAK ≥ 0","d":"UGK = 0","correct":"a","level":5},{"stt":113,"question":"Trên thân tụ ceramic có ghi .01, giá trị điện dung của tụ là?","a":"0,1 μF","b":"0,01 pF","c":"0,01 μF","d":"0,01 F","correct":"b","level":5},{"stt":114,"question":"Điều kiện để thyristor dẫn điện là?","a":"UAK = 0 và UGK = 0","b":"UAK = 0 và UGK> 0","c":"UAK> 0 và UGK = 0","d":"UAK> 0 và UGK> 0","correct":"d","level":5},{"stt":115,"question":"Các van cấp dầu vòi đốt Nhà máy DH1, DH3 được điều khiển bằng mấy van điện từ?","a":"2","b":"3","c":"1","d":"4","correct":"c","level":5},{"stt":116,"question":"Thyristor là một linh kiện có ba chân được kí hiệu?","a":"D, S, G","b":"B, C, E","c":"E, B1, B2","d":"A, K, G","correct":"d","level":6},{"stt":117,"question":"Tín hiệu báo vị trí các van hơi và dầu của vòi đốt dầu được lấy từ đâu?","a":"Các rơle trung gian trong tủ điều khiển tại chỗ","b":"Các tiếp điểm của rơle tác động đóng mở van","c":"Các công tắc vị trí tại van","d":"Các công tắc vị trí tại vòi đốt.","correct":"c","level":6},{"stt":118,"question":"Diode Zener khác diode chỉnh lưu ở chỗ?","a":"Bị đánh thủng mà không bị hỏng","b":"Chỉ cho dòng điện chạy qua theo một chiều từ A sang K","c":"Khi phân cực nghịch không bị đánh thủng","d":"Chịu được điện áp nghịch cao hơn mà không bị đánh thủng","correct":"a","level":6},{"stt":119,"question":"Khi dùng diode Zener để ổn áp, ta phải?","a":"Phân cực thuận diode","b":"Phân cực nghịch diode","c":"Không phải phân cực","d":"Tất cả đều sai.","correct":"b","level":6},{"stt":120,"question":"Trong mạch chỉnh lưu cầu, nếu có một trong các diode bị đánh thủng hoặc mắc ngược chiều thì hiện tượng gì sẽ xảy ra?","a":"Dòng điện sẽ chạy qua tải tiêu thụ theo chiều ngược lại","b":"Biến áp nguồn vẫn hoạt động tốt nhưng không có dòng điện chạy qua tải tiêu thụ","c":"Cuộn thứ cấp của biến áp nguồn bị ngắn mạch, làm cháy biến áp nguồn","d":"Không có dòng điện chạy qua cuộn thứ cấp của biến áp nguồn","correct":"c","level":6},{"stt":121,"question":"Sensor đo nhiệt độ báo bad trên DCS là do?","a":"Mất đường chuyền lên DCS","b":"Hỏng sensor","c":"Hỏng module","d":"Tất cả 1, 2, 3 đúng","correct":"d","level":6},{"stt":122,"question":"Trong quá trình đốt, khi van cấp dầu mở trong thời gian bao lâu nếu phát hiện không có lửa vòi đốt tự động chạy ra ?","a":"5 – 10 s","b":"15 – 20 s","c":"25 -30 s","d":"20 -25 s","correct":"b","level":6},{"stt":123,"question":"Khi vòi đốt không đốt được (không phát hiện được lửa), các nguyên nhân nào sau đây có thể xảy ra (giả định sensor phát hiện lửa tốt)?","a":"Van thông thổi không đóng; van hóa mù không mở","b":"Cần đánh lửa không đánh được lửa hoặc sai vị trí; biến thế đánh lửa hư","c":"Vòi đốt không đúng vị trí; van cấp dầu không mở","d":"Cả 1, 2 & 3.","correct":"d","level":6},{"stt":124,"question":"Người ta nói van thường đóng có nghĩa là?","a":"Khi chưa có tín hiệu điều khiển van ở trạng thái đóng","b":"Van đóng khi có tín hiệu điều khiển","c":"Van luôn luôn đóng","d":"Các ý đều sai","correct":"a","level":6},{"stt":125,"question":"Mục tiêu của điều khiển PID là?","a":"Hạn chế sai số","b":"Đáp ứng nhanh, tức thời","c":"Triệt tiêu sai số xác lập, giảm độ vọt lố, hạn chế dao động","d":"Hạn chế sai số, đáp ứng nhanh, triệt tiêu dao động","correct":"c","level":6},{"stt":126,"question":"Người ta phân transistor ra làm hai loại là?","a":"PPN và NPP","b":"PNP và NPN","c":"PPN và NNP","d":"PNN và NPP","correct":"b","level":6},{"stt":127,"question":"Khi Led 7 đoạn hiển thị chữ E thì?","a":"6 Led sáng, 1 Led tắt","b":"5 Led sáng, 2 Led b và c tắt","c":"Tất cả 7 Led đều sáng","d":"5 Led sáng, 2 Led b và d tắt","correct":"b","level":6},{"stt":128,"question":"Khi Led 7 đoạn hiển thị số 6 thì?","a":"Tất cả 7 Led đều sáng","b":"Tất cả 7 Led đều sáng trừ Led g tắt","c":"6 Led sáng 1 Led b tắt","d":"Tất cả đều sai.","correct":"c","level":6},{"stt":129,"question":"SSR được đều khiển bằng?","a":"Dòng điện xoay chiều","b":"Điện áp xoay chiều","c":"Dòng điện hoặc điện áp một chiều","d":"Điện áp một chiều","correct":"c","level":6},{"stt":130,"question":"Khi dùng diode Zener để ổn áp, ta phải?","a":"Phân cực thuận diode","b":"Phân cực nghịch diode","c":"Không phải phân cực","d":"Tất cả đều sai","correct":"b","level":6},{"stt":131,"question":"Diode bán dẫn là một linh kiện điện tử?","a":"Thụ động","b":"Tích cực","c":"Khuếch đại dòng","d":"Khuếch đại áp.","correct":"b","level":6},{"stt":132,"question":"Trên thân tụ ceramic có ghi .01, giá trị điện dung của tụ là?","a":"0,1 μF","b":"0,01 pF","c":"0,01 μF","d":"0,01 F","correct":"b","level":6},{"stt":133,"question":"Loại tụ điện nào chỉ sử dụng cho điện một chiều và phải mắc đúng cực?","a":"Tụ xoay","b":"Tụ giấy","c":"Tụ hóa","d":"Tụ gốm","correct":"c","level":6},{"stt":134,"question":"Tụ điện có điện dung C1= 100 pF, C2= 47 pF ghép song song, điện dung tương đương của chúng là?","a":"32 pF","b":"0,03 pF","c":"147 pF","d":"73,5 pF","correct":"c","level":6},{"stt":135,"question":"Điện dung tương đương của hai tụ mắc nối tiếp, với C1 = C2 = 1000 pF?","a":"1000 pF","b":"2000 pF","c":"1500 pF","d":"500 pF","correct":"d","level":6},{"stt":136,"question":"Một đoạn mạch điện có hai điện trở R1, R2 ghép song song thì?","a":"Nếu R1 > R2 thì I1 > I2 (I1 , I2 là dòng qua R1, R2)","b":"Nếu R1 < R2 thì I1 > I2","c":"Nếu R1 > R2 thì U1 > U2 (U1 U2 là hiệu điện thế giữa hai đầu R1, R2)","d":"Nếu R1 > R2 thì U1 < U2.","correct":"b","level":6},{"stt":137,"question":"Với điện trở có năm vòng màu thì vòng màu thứ hai chỉ?","a":"Sai số","b":"Nhiệt độ","c":"Số số 0 thêm vào","d":"Số tương ứng với màu","correct":"d","level":6},{"stt":138,"question":"Với điện trở có ba vòng màu thì vòng màu thứ ba chỉ?","a":"Số tương ứng với màu","b":"Sai số","c":"Số số 0 thêm vào","d":"Nhiệt độ","correct":"c","level":6},{"stt":139,"question":"Các cảm biến nhiệt độ lắp tại bộ gia nhiệt dùng để làm gì?","a":"Đo nhiệt độ bộ gia nhiệt","b":"Đo và cung cấp tín hiệu cho bộ điều khiển nhiệt độ","c":"Chỉ thị nhiệt độ của các điện trở sấy","d":"Lấy tín hiệu nhiệt độ cho bộ kích","correct":"b","level":7},{"stt":140,"question":"Bộ điều khiển nhiệt độ của các bộ gia nhiệt ngoài chức năng ổn định nhiệt còn có các chức năng nào sau đây?","a":"Chỉ thị nhiệt độ","b":"Cảnh báo nhiệt độ cao thấp","c":"Cảnh báo nhiệt độ cao thấp, cắt nguồn động lực điện trở sấy khi nhiệt độ quá cao","d":"Cắt nguồn động lực cấp cho điện trở sấy khi phát hiện lỗi của mạch điều khiển.","correct":"c","level":7},{"stt":141,"question":"Để hiệu chỉnh hành trình đóng mở, ta phải tiến hành theo cách nào sau đây?","a":"Đóng, mở van bằng tay quay tại chỗ","b":"Đóng, mở van bằng khí nén","c":"Đóng, mở van từ phòng điều khiển trung tâm","d":"Đóng, mở van bằng cách phát dòng hoặc áp tại chỗ","correct":"a","level":7},{"stt":142,"question":"Về trạng thái control van có mấy loại?","a":"1","b":"2","c":"3","d":"4","correct":"b","level":7},{"stt":143,"question":"Tín hiệu tác động của van đảo chiều gồm?","a":"Tác động bằng tay, bằng cơ, bằng khí nén","b":"Tác động bằng tay, bằng khí nén, bằng nam châm điện","c":"Tác động bằng tay, bằng cơ, bằng khí nén, bằng nam châm điện","d":"Tác động bằng tay, bằng cơ, bằng nam châm điện","correct":"c","level":7},{"stt":144,"question":"Van điện từ khí nén (van đảo chiều) là gì","a":"Cơ cấu chỉnh hướng có nhiệm vụ điều khiển dòng khí nén đi qua van","b":"Chủ yếu bằng cách đóng mở","c":"Di chuyển vị trí để thay đổi hướng của khí nén","d":"Tất cả các câu trên","correct":"d","level":7},{"stt":145,"question":"Cấu tạo của van pittong dạng khí gồm?","a":"Thân van (xy lanh) và ty pittong","b":"Thân van (xylanh), phốt và ty pittong","c":"Thân van (xylanh), lò xo và phốt","d":"Thân van (xylanh), ty pittong, lò xo và phốt.","correct":"d","level":7},{"stt":146,"question":"Nêu nguyên lý làm việc của van pittong?","a":"Van được điều khiển tự động bằng van điện từ","b":"Khí nén được cấp vào xylanh (thông qua van điện từ), khí nén thắng lực lò xo làm đẩy pittong chạy","c":"Tác động qua bộ phận truyền động làm đóng mở van","d":"Tất cả các câu trên.","correct":"d","level":7},{"stt":147,"question":"Nguyên tắc hoạt động của van điện từ?","a":"Dựa trên áp suất","b":"Dựa trên lực điện từ","c":"Dựa trên chênh áp","d":"Dựa trên tốc độ dòng chảy","correct":"b","level":7},{"stt":148,"question":"Tín hiệu đầu ra của cặp nhiệt được đo bằng giá trị nào","a":"mV DC","b":"mV AV","c":"mA DC","d":"mA AC","correct":"a","level":7},{"stt":149,"question":"Về chức năng tác động, bộ định vị có mấy chức năng?","a":"1","b":"2","c":"3","d":"4","correct":"b","level":7},{"stt":150,"question":"Vì sao nhiệt điện trở Pt100 lại dùng sơ đồ 3 dây?","a":"Để tăng độ an toàn.","b":"Để tăng độ chính xác.","c":"Để loại trừ sai số do điện trở đường dây.","d":"Cả 1, 2, 3.","correct":"c","level":7},{"stt":151,"question":"Điện áp nguồn cấp cho các transmitter là bao nhiêu","a":"48 VAC","b":"48 VDC","c":"24 VDC","d":"24 VAC","correct":"c","level":7},{"stt":152,"question":"Chất lưu là tên gọi chung của?","a":"Chất lỏng và chất khí","b":"Chất lỏng và chất rắn","c":"Chất khí và chất rắn","d":"Chất khí ở thể hơi","correct":"a","level":7},{"stt":153,"question":"Tín hiệu điều khiển bộ định vị ABB?","a":"0 – 20 mA","b":"4 – 20 mA","c":"0 – 10 Vdc","d":"6 – 11 Vdc","correct":"b","level":7},{"stt":154,"question":"Ở nhiệt độ 100°C giá trị điện trở đo được tại nhiệt điện trở Pt100 bằng bao nhiêu?","a":"100 Ω","b":"105 Ω","c":"110 Ω","d":"138.5 Ω","correct":"d","level":7},{"stt":155,"question":"Nguyên lý đo điện áp là?","a":"Mắc thiết bị đo song song với mạch","b":"Mắc vôn kế nối tiếp với nhánh cần đo","c":"Mắc ampe kế song song với nhánh cần đo","d":"Mắc vôn kế song song với nhánh cần đo","correct":"a","level":7},{"stt":156,"question":"Để Rset bộ định vị ABB ta tiến hành như sau?","a":"Nhấn và giữ đồng thời các phím Enter và Mode trong 3 giây","b":"Nhấn và giữ đồng thời các phím Enter và Mode trong 5 giây","c":"Nhấn và giữ đồng thời các phím ↑ và ↓ trong 5 giây","d":"Nhấn và giữ đồng thời các phím Enter, Mode, ↑ và ↓ 5 giây","correct":"d","level":7},{"stt":157,"question":"Tín hiệu Analog input của định vị Fisher là?","a":"0 – 20 mA","b":"4 – 20 mA","c":"0 – 10 Vdc","d":"6 – 11 Vdc","correct":"b","level":7},{"stt":158,"question":"Bộ tác động (Actuator), khi cấp khí nén sẽ tác động đóng van người ta gọi đó là loại van gì?","a":"Air to open","b":"Air to closed","c":"Air to start","d":"Air to closed-open","correct":"b","level":7},{"stt":159,"question":"Bộ tác động (Actuator), khi cấp khí nén sẽ tác động mở van người ta gọi đó là loại van gì?","a":"Air to open","b":"Air to closed","c":"Air to start","d":"Air to closed-open","correct":"a","level":7},{"stt":160,"question":"Đối với bộ tác động “Air to closed”, khi đang vận hành nếu mất gió cung cấp thì van sẽ?","a":"Đóng lại","b":"Giữ nguyên vị trí","c":"Mở ra","d":"Tự động mở ra","correct":"d","level":7}];
+  var LEVELS = [{"level":1,"count":23,"minutes":23,"label":"Bậc 1 (23 câu, từ câu 1 đến câu 23 — thời gian làm bài: 23 phút)"},{"level":2,"count":46,"minutes":46,"label":"Bậc 2 (46 câu, từ câu 1 đến câu 46 — thời gian làm bài: 46 phút)"},{"level":3,"count":69,"minutes":69,"label":"Bậc 3 (69 câu, từ câu 1 đến câu 69 — thời gian làm bài: 69 phút)"},{"level":4,"count":92,"minutes":92,"label":"Bậc 4 (92 câu, từ câu 1 đến câu 92 — thời gian làm bài: 92 phút)"},{"level":5,"count":115,"minutes":115,"label":"Bậc 5 (115 câu, từ câu 1 đến câu 115 — thời gian làm bài: 115 phút)"},{"level":6,"count":138,"minutes":138,"label":"Bậc 6 (138 câu, từ câu 1 đến câu 138 — thời gian làm bài: 138 phút)"},{"level":7,"count":160,"minutes":160,"label":"Bậc 7 (160 câu, từ câu 1 đến câu 160 — thời gian làm bài: 160 phút)"}];
+  var PASS_THRESHOLD_PERCENT = 80; // Ngưỡng đạt mặc định — sửa số này nếu công ty quy định khác
+
+  var STORAGE_KEY = 'quiz_candidates_kiemnhiet_v1';
+
+  // Mật khẩu Admin — đổi giá trị này nếu muốn. Đây CHỈ là khóa phía trình duyệt
+  // (client-side), không phải bảo mật máy chủ thực sự — bất kỳ ai xem mã nguồn
+  // trang đều có thể thấy giá trị này, nên không dùng để bảo vệ dữ liệu quan trọng.
+  var ADMIN_PASSWORD = 'HN83admin';
+
+  var state = {
+    name: '',
+    level: null,
+    pool: [],       // questions in scope for chosen level
+    answers: {},    // index -> selected key (a/b/c/d)
+    locked: {},     // index -> true once the candidate has moved away from it (or submitted)
+    current: 0,
+    isAdmin: false,
+    timeLimitSeconds: 0,
+    timeRemaining: 0,
+    timerId: null
+  };
+
+  // Thời gian làm bài mặc định nếu một bậc không khai báo "minutes" trong LEVELS —
+  // 60 giây cho mỗi câu hỏi. Có thể sửa số này hoặc sửa "minutes" trong từng bậc ở LEVELS.
+  var DEFAULT_SECONDS_PER_QUESTION = 60;
+
+  // ---------- populate level select ----------
+  var levelSelect = document.getElementById('candLevel');
+  var levelDesc = document.getElementById('levelDesc');
+  LEVELS.forEach(function (lv) {
+    var opt = document.createElement('option');
+    opt.value = lv.level;
+    opt.textContent = 'Bậc ' + lv.level + ' (' + lv.count + ' câu)';
+    levelSelect.appendChild(opt);
+  });
+  function updateLevelDesc() {
+    var lv = LEVELS.find(function (l) { return String(l.level) === levelSelect.value; });
+    levelDesc.textContent = lv ? lv.label : '';
+  }
+  levelSelect.addEventListener('change', updateLevelDesc);
+  updateLevelDesc();
+
+  // ---------- storage helpers ----------
+  function getCandidates() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveCandidates(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function recordAttempt(record) {
+    var list = getCandidates();
+    list.push(record);
+    saveCandidates(list);
+  }
+
+  function escapeHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  // ---------- login ----------
+  document.getElementById('startBtn').addEventListener('click', function () {
+    var name = document.getElementById('candName').value.trim();
+    var pass = document.getElementById('candPass').value;
+    var msg = document.getElementById('loginMsg');
+    if (!name || !pass) {
+      msg.textContent = 'Vui lòng nhập đủ họ tên và mật khẩu.';
+      return;
+    }
+    msg.textContent = '';
+    state.name = name;
+    state.level = Number(levelSelect.value);
+    var lv = LEVELS.find(function (l) { return l.level === state.level; });
+    var count = lv ? lv.count : QUESTIONS.length;
+    state.pool = QUESTIONS.slice(0, count);
+    state.answers = {};
+    state.locked = {};
+    state.current = 0;
+    state.submitted = false;
+
+    var minutes = (lv && lv.minutes) ? lv.minutes : Math.ceil((count * DEFAULT_SECONDS_PER_QUESTION) / 60);
+    state.timeLimitSeconds = minutes * 60;
+    state.timeRemaining = state.timeLimitSeconds;
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('examScreen').style.display = 'block';
+    document.getElementById('metaName').textContent = name;
+    document.getElementById('metaTotal').textContent = state.pool.length;
+    buildDots();
+    renderQuestion();
+    startTimer();
+  });
+
+  // ---------- timer ----------
+  function formatTime(totalSeconds) {
+    var s = Math.max(0, totalSeconds);
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateTimerDisplay() {
+    var el = document.getElementById('timerDisplay');
+    el.textContent = formatTime(state.timeRemaining);
+    el.classList.toggle('low', state.timeRemaining <= 60);
+  }
+
+  function startTimer() {
+    stopTimer();
+    updateTimerDisplay();
+    state.timerId = setInterval(function () {
+      state.timeRemaining--;
+      updateTimerDisplay();
+      if (state.timeRemaining <= 0) {
+        stopTimer();
+        alert('Đã hết thời gian làm bài! Bài làm sẽ được nộp tự động.');
+        gradeAndShow();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  // ---------- exam rendering ----------
+  function buildDots() {
+    var dots = document.getElementById('qDots');
+    dots.innerHTML = '';
+    state.pool.forEach(function (q, idx) {
+      var d = document.createElement('div');
+      d.className = 'q-dot';
+      d.textContent = idx + 1;
+      d.dataset.idx = idx;
+      d.addEventListener('click', function () {
+        goToQuestion(idx);
+      });
+      dots.appendChild(d);
+    });
+  }
+
+  // Khóa câu hiện tại (nếu đã chọn đáp án) rồi chuyển sang câu khác.
+  // Một khi đã rời khỏi câu hỏi, đáp án của câu đó không thể chỉnh sửa lại.
+  function goToQuestion(newIdx) {
+    if (newIdx === state.current) { return; }
+    if (state.answers[state.current] !== undefined) {
+      state.locked[state.current] = true;
+    }
+    state.current = newIdx;
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var idx = state.current;
+    var q = state.pool[idx];
+    var isLocked = !!state.locked[idx];
+    document.getElementById('metaCurrent').textContent = idx + 1;
+    document.getElementById('progressFill').style.width = (((idx + 1) / state.pool.length) * 100) + '%';
+    document.getElementById('qTag').textContent = 'Bậc ' + q.level + ' · Câu ' + (idx + 1) + ' / ' + state.pool.length;
+    document.getElementById('qText').textContent = q.question;
+
+    var optsWrap = document.getElementById('qOptions');
+    optsWrap.innerHTML = '';
+
+    var existingNote = document.getElementById('lockedNote');
+    if (existingNote) { existingNote.remove(); }
+    if (isLocked) {
+      var note = document.createElement('div');
+      note.className = 'locked-note';
+      note.id = 'lockedNote';
+      note.textContent = 'Câu này đã khóa — bạn đã chuyển câu nên không thể chọn lại đáp án khác.';
+      optsWrap.parentNode.insertBefore(note, optsWrap);
+    }
+
+    ['a', 'b', 'c', 'd'].forEach(function (key) {
+      var label = document.createElement('label');
+      label.className = 'option' + (state.answers[idx] === key ? ' selected' : '') + (isLocked ? ' locked' : '');
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'opt';
+      input.value = key;
+      input.checked = state.answers[idx] === key;
+      input.disabled = isLocked;
+      input.addEventListener('change', function () {
+        if (isLocked) { return; }
+        state.answers[idx] = key;
+        renderQuestion();
+        updateDots();
+      });
+      var span = document.createElement('span');
+      span.innerHTML = '<span class="key">' + key + '.</span> ' + escapeHtml(q[key]);
+      label.appendChild(input);
+      label.appendChild(span);
+      optsWrap.appendChild(label);
+    });
+
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === state.pool.length - 1;
+    updateDots();
+  }
+
+  function updateDots() {
+    var dots = document.getElementById('qDots').children;
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle('answered', state.answers[i] !== undefined);
+      dots[i].classList.toggle('current', i === state.current);
+    }
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function () {
+    if (state.current > 0) { goToQuestion(state.current - 1); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    if (state.current < state.pool.length - 1) { goToQuestion(state.current + 1); }
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var unanswered = state.pool.length - Object.keys(state.answers).length;
+    if (unanswered > 0) {
+      var ok = confirm('Bạn còn ' + unanswered + ' câu chưa trả lời. Những câu đó sẽ tính là sai. Nộp bài luôn?');
+      if (!ok) return;
+    }
+    gradeAndShow();
+  });
+
+  // ---------- grading ----------
+  function gradeAndShow() {
+    if (state.submitted) { return; } // chặn nộp bài 2 lần (ví dụ bấm Nộp bài đúng lúc hết giờ)
+    state.submitted = true;
+    stopTimer();
+    // Nộp bài xong: khóa toàn bộ câu hỏi, không cho sửa lại bất kỳ câu nào nữa.
+    state.pool.forEach(function (q, idx) { state.locked[idx] = true; });
+
+    var correctCount = 0;
+    var wrongList = [];
+    state.pool.forEach(function (q, idx) {
+      var picked = state.answers[idx];
+      if (picked === q.correct) {
+        correctCount++;
+      } else {
+        wrongList.push({ idx: idx, q: q, picked: picked || null });
+      }
+    });
+    var total = state.pool.length;
+    var wrongCount = total - correctCount;
+    var percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    var passed = percent >= PASS_THRESHOLD_PERCENT;
+
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('resultsScreen').style.display = 'block';
+
+    var banner = document.getElementById('resultBanner');
+    banner.className = 'result-banner ' + (passed ? 'pass' : 'fail');
+    document.getElementById('resultVerdict').textContent = passed ? 'ĐẠT' : 'KHÔNG ĐẠT';
+    document.getElementById('resultSub').textContent =
+      state.name + ' — Bậc ' + state.level + ' — ' + correctCount + '/' + total + ' câu đúng (' + percent + '%). Ngưỡng đạt: ' + PASS_THRESHOLD_PERCENT + '%.';
+
+    document.getElementById('statCorrect').textContent = correctCount;
+    document.getElementById('statWrong').textContent = wrongCount;
+    document.getElementById('statPercent').textContent = percent + '%';
+
+    var reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '';
+    if (wrongList.length === 0) {
+      var p = document.createElement('p');
+      p.style.color = 'var(--steel)';
+      p.textContent = 'Không có câu nào sai — làm đúng hết!';
+      reviewList.appendChild(p);
+    } else {
+      wrongList.forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'review-item';
+        var yourAnswerText = item.picked ? (item.picked + '. ' + item.q[item.picked]) : '(không trả lời)';
+        var correctAnswerText = item.q.correct + '. ' + item.q[item.q.correct];
+        div.innerHTML =
+          '<div class="q-text">Câu ' + (item.idx + 1) + ': ' + escapeHtml(item.q.question) + '</div>' +
+          '<div class="review-row your-wrong"><span class="tag">Bạn chọn:</span>' + escapeHtml(yourAnswerText) + '</div>' +
+          '<div class="review-row correct-answer"><span class="tag">Đáp án đúng:</span>' + escapeHtml(correctAnswerText) + '</div>';
+        reviewList.appendChild(div);
+      });
+    }
+
+    // store this attempt so it can be reviewed later (per-browser storage)
+    var saveStatusEl = document.getElementById('saveStatus');
+    try {
+      recordAttempt({
+        name: state.name,
+        level: state.level,
+        total: total,
+        correct: correctCount,
+        wrong: wrongCount,
+        percent: percent,
+        passed: passed,
+        timestamp: new Date().toISOString(),
+        wrongQuestions: wrongList.map(function (item) {
+          return { stt: item.q.stt, picked: item.picked, correct: item.q.correct };
+        })
+      });
+      saveStatusEl.classList.remove('error');
+      saveStatusEl.textContent = '✓ Đã lưu kết quả bài làm vào trình duyệt này.';
+    } catch (e) {
+      saveStatusEl.classList.add('error');
+      saveStatusEl.textContent = '⚠ Không lưu được kết quả (trình duyệt chặn lưu trữ cục bộ). Vui lòng chụp lại màn hình kết quả.';
+    }
+  }
+
+  document.getElementById('retakeBtn').addEventListener('click', function () {
+    stopTimer();
+    document.getElementById('resultsScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('candPass').value = '';
+  });
+
+  // ============================================================
+  // ---------- Admin: đăng nhập, xem/xuất/xóa dữ liệu thí sinh ----------
+  // Đây là cơ chế bảo vệ PHÍA TRÌNH DUYỆT (client-side) để thuận tiện,
+  // không phải bảo mật máy chủ thực sự. Bất kỳ ai có quyền xem mã nguồn
+  // trang đều có thể thấy ADMIN_PASSWORD, nên đừng dùng để bảo vệ dữ liệu
+  // thật sự quan trọng hay bí mật.
+  // ============================================================
+
+  document.getElementById('adminLoginLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminLoginScreen').style.display = 'block';
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminLoginMsg').textContent = '';
+  });
+
+  document.getElementById('adminBackLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  document.getElementById('adminLoginBtn').addEventListener('click', function () {
+    var pass = document.getElementById('adminPass').value;
+    if (pass !== ADMIN_PASSWORD) {
+      document.getElementById('adminLoginMsg').textContent = 'Sai mật khẩu Admin.';
+      return;
+    }
+    state.isAdmin = true;
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    renderAdminTable();
+  });
+
+  document.getElementById('adminLogoutBtn').addEventListener('click', function () {
+    state.isAdmin = false;
+    document.getElementById('adminScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  function fmtTimestamp(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString('vi-VN');
+    } catch (e) { return iso || ''; }
+  }
+
+  function renderAdminTable() {
+    var list = getCandidates();
+    var tbody = document.getElementById('adminTbody');
+    tbody.innerHTML = '';
+    if (list.length === 0) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="8" style="color:var(--steel);">Chưa có dữ liệu thí sinh nào được lưu trên trình duyệt này.</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+    list.forEach(function (rec, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(rec.name) + '</td>' +
+        '<td>' + escapeHtml(rec.level) + '</td>' +
+        '<td>' + escapeHtml(rec.correct) + '</td>' +
+        '<td>' + escapeHtml(rec.wrong) + '</td>' +
+        '<td>' + escapeHtml(rec.percent) + '%</td>' +
+        '<td class="' + (rec.passed ? 'pass-tag' : 'fail-tag') + '">' + (rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT') + '</td>' +
+        '<td>' + escapeHtml(fmtTimestamp(rec.timestamp)) + '</td>' +
+        '<td class="row-actions"></td>';
+      var actionsTd = tr.querySelector('.row-actions');
+
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.textContent = 'Sửa';
+      editBtn.addEventListener('click', function () { editCandidateRecord(i); });
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = 'Xóa';
+      delBtn.addEventListener('click', function () { deleteCandidateRecord(i); });
+
+      actionsTd.appendChild(editBtn);
+      actionsTd.appendChild(delBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Admin sửa lại số câu đúng đã ghi nhận cho một thí sinh (ví dụ khi cần
+  // hiệu chỉnh do lỗi chấm) — hệ thống tự tính lại số câu sai, tỷ lệ và kết quả đạt/không đạt.
+  function editCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var input = prompt('Nhập lại số câu đúng cho ' + rec.name + ' (tổng ' + rec.total + ' câu):', rec.correct);
+    if (input === null) { return; }
+    var newCorrect = parseInt(input, 10);
+    if (isNaN(newCorrect) || newCorrect < 0 || newCorrect > rec.total) {
+      alert('Giá trị không hợp lệ. Vui lòng nhập số từ 0 đến ' + rec.total + '.');
+      return;
+    }
+    rec.correct = newCorrect;
+    rec.wrong = rec.total - newCorrect;
+    rec.percent = rec.total > 0 ? Math.round((newCorrect / rec.total) * 100) : 0;
+    rec.passed = rec.percent >= PASS_THRESHOLD_PERCENT;
+    rec.editedByAdminAt = new Date().toISOString();
+    list[i] = rec;
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  function deleteCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var ok = confirm('Xóa kết quả của ' + rec.name + '? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    list.splice(i, 1);
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  document.getElementById('clearAllBtn').addEventListener('click', function () {
+    var ok = confirm('Xóa TOÀN BỘ dữ liệu thí sinh đã lưu trên trình duyệt này? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    saveCandidates([]);
+    renderAdminTable();
+  });
+
+  document.getElementById('exportXlsxBtn').addEventListener('click', function () {
+    var warnEl = document.getElementById('xlsxWarning');
+    if (typeof XLSX === 'undefined') {
+      warnEl.style.display = 'block';
+      warnEl.textContent = '⚠ Không tải được thư viện xuất Excel (cần có kết nối internet). Vui lòng dùng nút "Tải danh sách (CSV)" — file CSV vẫn mở được trực tiếp bằng Excel.';
+      return;
+    }
+    warnEl.style.display = 'none';
+    var list = getCandidates();
+    var header = ['Họ tên', 'Bậc', 'Tổng số câu', 'Câu đúng', 'Câu sai', 'Tỷ lệ (%)', 'Kết quả', 'Thời gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [ { wch: 22 }, { wch: 6 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 } ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Danh sach thi sinh');
+    XLSX.writeFile(wb, 'danh-sach-thi-sinh.xlsx');
+  });
+
+  document.getElementById('exportCsvBtn').addEventListener('click', function () {
+    var list = getCandidates();
+    var header = ['Ho ten', 'Bac', 'Tong so cau', 'Cau dung', 'Cau sai', 'Ty le (%)', 'Ket qua', 'Thoi gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'DAT' : 'KHONG DAT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        var s = String(cell == null ? '' : cell);
+        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+          s = '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'danh-sach-thi-sinh.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+// ---------- In kết quả ----------
+  var printBtnEl = document.getElementById('printResultBtn');
+  if (printBtnEl) {
+    printBtnEl.addEventListener('click', function () {
+      var meta = document.getElementById('printMeta');
+      if (meta) {
+        var now = new Date();
+        var ts = now.toLocaleString('vi-VN');
+        meta.textContent = 'Ngày in: ' + ts;
+      }
+      window.print();
+    });
+  }
+</script>
+
+</body>
+</html>

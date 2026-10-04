@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thi trắc nghiệm — Công nhân Tổ Máy Tĩnh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --ink: #142621;
+    --panel-dark: #0E2A24;
+    --panel-dark-2: #16362E;
+    --paper: #EDEFEA;
+    --paper-2: #FFFFFF;
+    --line: #CBD1C8;
+    --steel: #5C6B64;
+    --amber: #E8A33D;
+    --amber-deep: #C97F1F;
+    --blue: #3E7C9A;
+    --pass: #3F7D5C;
+    --pass-soft: #E4F1E8;
+    --fail: #AF4B36;
+    --fail-soft: #F7E7E1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
+  h1, h2, h3 { font-weight: 700; line-height: 1.2; margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Home button ---------- */
+  .home-btn {
+    position: fixed; top: 16px; left: 16px; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--panel-dark); color: #FFFFFF; text-decoration: none;
+    font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border: none;
+  }
+  .home-btn:hover { background: var(--panel-dark-2); }
+
+  header.top {
+    background: var(--panel-dark);
+    color: #FFFFFF;
+    padding: 60px 20px 34px;
+    text-align: center;
+    border-bottom: 3px solid var(--amber);
+  }
+  header.top .eyebrow { color: var(--amber); font-weight: 600; font-size: 0.88rem; margin-bottom: 10px; }
+  header.top h1 { font-size: clamp(1.5rem, 3.4vw, 2rem); max-width: 30ch; margin: 0 auto; }
+  header.top p { color: #C7D3CC; margin-top: 12px; font-size: 0.95rem; }
+
+  .card {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    padding: 28px 26px;
+    margin-top: -24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen .field { margin-bottom: 18px; }
+  #loginScreen label { display: block; font-size: 0.86rem; font-weight: 600; color: var(--steel); margin-bottom: 6px; }
+  #loginScreen input, #loginScreen select {
+    width: 100%; padding: 11px 13px; font-family: inherit; font-size: 0.98rem;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  #loginScreen input:focus, #loginScreen select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .btn {
+    display: inline-block; padding: 13px 24px; font-weight: 600; font-size: 0.95rem;
+    border: 2px solid transparent; background: var(--amber); color: var(--panel-dark);
+    width: 100%; text-align: center;
+  }
+  .btn:hover { background: var(--amber-deep); }
+  .btn-secondary { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-secondary:hover { border-color: var(--amber); }
+  .form-msg { font-size: 0.86rem; min-height: 1.2em; margin-top: 4px; color: var(--fail); }
+  .level-desc { font-size: 0.82rem; color: var(--steel); margin-top: 6px; }
+
+  /* ---------- Exam screen ---------- */
+  #examScreen { display: none; }
+  .exam-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.86rem; color: var(--steel); margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+  }
+  .exam-meta strong { color: var(--ink); }
+  .exam-meta .timer { font-weight: 700; color: var(--panel-dark); background: var(--paper); border: 1px solid var(--line); padding: 4px 10px; }
+  .exam-meta .timer.low { color: #FFFFFF; background: var(--fail); border-color: var(--fail); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .progress-track { height: 6px; background: var(--paper); border: 1px solid var(--line); margin-bottom: 24px; }
+  .progress-fill { height: 100%; background: var(--amber); transition: width 0.2s ease; }
+
+  .q-tag { color: var(--blue); font-weight: 600; font-size: 0.86rem; margin-bottom: 8px; }
+  .q-text { font-size: 1.08rem; font-weight: 600; margin-bottom: 20px; }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 12px;
+    border: 1px solid var(--line); padding: 13px 16px; cursor: pointer;
+    background: var(--paper-2);
+  }
+  .option:hover { border-color: var(--amber); }
+  .option.selected { border-color: var(--blue); background: #EAF1F4; }
+  .option.locked { opacity: 0.62; cursor: default; }
+  .option.locked:hover { border-color: var(--line); }
+  .option input { margin-top: 3px; accent-color: var(--blue); flex-shrink: 0; }
+  .option span.key { font-weight: 700; text-transform: uppercase; margin-right: 4px; }
+  .locked-note { font-size: 0.82rem; color: var(--fail); margin: -12px 0 16px; font-weight: 600; }
+
+  .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  .nav-row .btn, .nav-row button { flex: 1; }
+
+  .q-dots { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .q-dot {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.76rem; font-weight: 600; border: 1px solid var(--line); background: var(--paper-2);
+    color: var(--steel); cursor: pointer;
+  }
+  .q-dot.answered { background: var(--panel-dark-2); color: #FFFFFF; border-color: var(--panel-dark-2); }
+  .q-dot.current { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+  /* ---------- Results screen ---------- */
+  #resultsScreen { display: none; }
+  .result-banner {
+    text-align: center; padding: 30px 20px; margin-bottom: 24px;
+  }
+  .result-banner.pass { background: var(--pass-soft); border: 1px solid var(--pass); }
+  .result-banner.fail { background: var(--fail-soft); border: 1px solid var(--fail); }
+  .result-banner .verdict { font-size: 1.7rem; font-weight: 700; }
+  .result-banner.pass .verdict { color: var(--pass); }
+  .result-banner.fail .verdict { color: var(--fail); }
+  .result-banner .sub { margin-top: 6px; color: var(--steel); font-size: 0.95rem; }
+
+  .stat-row { display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 28px; }
+  .stat-box { flex: 1; background: var(--paper-2); text-align: center; padding: 18px 10px; }
+  .stat-box .num { font-size: 1.6rem; font-weight: 700; }
+  .stat-box .label { font-size: 0.78rem; color: var(--steel); margin-top: 4px; }
+  .stat-box.correct .num { color: var(--pass); }
+  .stat-box.wrong .num { color: var(--fail); }
+
+  .review-item { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .q-text { font-size: 0.98rem; margin-bottom: 10px; }
+  .review-row { font-size: 0.88rem; margin-bottom: 4px; }
+  .review-row .tag { font-weight: 700; margin-right: 6px; }
+  .review-row.your-wrong .tag { color: var(--fail); }
+  .review-row.correct-answer .tag { color: var(--pass); }
+
+  .result-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .result-actions > * { flex: 1; min-width: 160px; }
+  .save-status { font-size: 0.86rem; color: var(--pass); margin-top: 8px; font-weight: 600; }
+  .save-status.error { color: var(--fail); }
+
+  /* ---------- Admin ---------- */
+  .admin-link-row { text-align: center; margin-top: 18px; }
+  .admin-link-row a { font-size: 0.84rem; color: var(--steel); text-decoration: underline; }
+  #adminLoginScreen, #adminScreen { display: none; }
+  .admin-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .admin-bar .btn-secondary { width: auto; padding: 9px 16px; }
+  .admin-note { font-size: 0.82rem; color: var(--steel); background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; margin-bottom: 20px; }
+  table.admin-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  table.admin-table th, table.admin-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  table.admin-table th { color: var(--steel); font-size: 0.78rem; text-transform: uppercase; }
+  table.admin-table .pass-tag { color: var(--pass); font-weight: 700; }
+  table.admin-table .fail-tag { color: var(--fail); font-weight: 700; }
+  table.admin-table .row-actions button { font-size: 0.78rem; padding: 5px 9px; margin-right: 4px; border: 1px solid var(--line); background: var(--paper-2); }
+  table.admin-table .row-actions button:hover { border-color: var(--amber); }
+  .admin-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+    .nav-row { flex-direction: column; }
+  }
+
+  /* ---------- In kết quả ---------- */
+  .print-meta { display:none; }
+  @media print {
+    .no-print, .home-btn { display: none !important; }
+    #loginScreen, #examScreen, #adminLoginScreen, #adminScreen { display: none !important; }
+    body { background: #fff !important; color:#000 !important; }
+    .card { box-shadow:none !important; border:1px solid #999 !important; }
+    .print-meta { display:block !important; margin-bottom:14px; font-size:13px; color:#444; }
+  }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="index.html" title="Về trang chủ">⌂</a>
+
+<header class="top">
+  <div class="eyebrow">NHÀ MÁY NHIỆT ĐIỆN SÔNG HẬU 1-PVPGB_PX BDSC THI TRẮC NGHIỆM</div>
+  <h1>Đề thi Công nhân — Tổ Máy tĩnh</h1>
+  <p>Đăng nhập họ tên và mật khẩu để bắt đầu làm bài.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card" id="loginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập làm bài</h2>
+    <div class="field">
+      <label for="candName">Họ và tên</label>
+      <input type="text" id="candName" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="candPass">Mật khẩu</label>
+      <input type="password" id="candPass" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label for="candLevel">Chọn bậc thi</label>
+      <select id="candLevel"></select>
+      <div class="level-desc" id="levelDesc"></div>
+    </div>
+    <div class="form-msg" id="loginMsg"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài</button>
+    <div class="admin-link-row"><a href="#" id="adminLoginLink">Quản trị viên (Admin)</a></div>
+  </div>
+
+  <div class="card" id="adminLoginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập Admin</h2>
+    <div class="field">
+      <label for="adminPass">Mật khẩu Admin</label>
+      <input type="password" id="adminPass" autocomplete="off" />
+    </div>
+    <div class="form-msg" id="adminLoginMsg"></div>
+    <button class="btn" id="adminLoginBtn" type="button">Đăng nhập</button>
+    <div class="admin-link-row"><a href="#" id="adminBackLink">← Quay lại đăng nhập thí sinh</a></div>
+  </div>
+
+  <div class="card" id="adminScreen">
+    <div class="admin-bar">
+      <h2>Bảng quản trị — Dữ liệu thí sinh</h2>
+      <button class="btn btn-secondary" id="adminLogoutBtn" type="button">Đăng xuất</button>
+    </div>
+    <div class="admin-note">Dữ liệu này chỉ lưu trên trình duyệt hiện tại (localStorage), không đồng bộ giữa các máy. Đây là quyền quản trị phía trình duyệt, không phải cơ chế bảo mật máy chủ thực sự.</div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Họ tên</th><th>Bậc</th><th>Đúng</th><th>Sai</th><th>Tỷ lệ</th><th>Kết quả</th><th>Thời gian</th><th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="adminTbody"></tbody>
+      </table>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="exportXlsxBtn" type="button">Xuất file Excel (.xlsx)</button>
+      <button class="btn btn-secondary" id="exportCsvBtn" type="button">Tải danh sách (CSV)</button>
+      <button class="btn btn-secondary" id="clearAllBtn" type="button">Xóa toàn bộ dữ liệu</button>
+    </div>
+    <div id="xlsxWarning" class="form-msg" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="examScreen">
+    <div class="exam-meta">
+      <span>Thí sinh: <strong id="metaName"></strong></span>
+      <span>Câu <strong id="metaCurrent"></strong>/<span id="metaTotal"></span></span>
+      <span class="timer" id="timerDisplay">--:--</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="q-tag" id="qTag"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="qOptions"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" id="prevBtn" type="button">← Câu trước</button>
+      <button class="btn btn-secondary" id="nextBtn" type="button">Câu sau →</button>
+    </div>
+
+    <div class="q-dots" id="qDots"></div>
+    <button class="btn" id="submitBtn" type="button" style="margin-top: 10px;">Nộp bài</button>
+  </div>
+
+  <div class="card" id="resultsScreen">
+    <div class="result-banner" id="resultBanner">
+      <div class="verdict" id="resultVerdict"></div>
+      <div class="sub" id="resultSub"></div>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box correct"><div class="num" id="statCorrect"></div><div class="label">Câu đúng</div></div>
+      <div class="stat-box wrong"><div class="num" id="statWrong"></div><div class="label">Câu sai</div></div>
+      <div class="stat-box"><div class="num" id="statPercent"></div><div class="label">Tỷ lệ đúng</div></div>
+    </div>
+    <h3 style="margin-bottom: 14px;">Xem lại các câu sai</h3>
+    <div id="reviewList"></div>
+    <div class="print-meta" id="printMeta"></div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="retakeBtn" type="button">Làm lại</button>
+      <button class="btn btn-secondary no-print" id="printResultBtn" type="button">In kết quả</button>
+      <a class="btn" href="index.html" style="text-align:center;">Về trang chủ</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var QUESTIONS = [{"stt":1,"question":"Nối đất trong hệ thống điện gồm những loại nào?","a":"Nối đất làm việc","b":"Nối đất an toàn hay nối đất bảo vệ","c":"Nối đất chống sét","d":"Cả a, b và c","correct":"d","level":1},{"stt":2,"question":"Công thức tính R của ba điện trở R1, R2, tđ R3 mắc song song","a":"Rtđ = R1/3 + R2/3 + R3/3","b":"1/Rtđ = 1/R1 + 1/R2 +1/R3","c":"Rtđ = (R1 + R2 + R3)x3","d":"Rtđ = R1 + R2 +R3","correct":"b","level":1},{"stt":3,"question":"Công thức tính C của ba tụ điện C1, C2, tđ C3 mắc song song","a":"C = C1/3 + C2/3 + C3/3 tđ","b":"1/C = 1/C1 + 1/C2 +1/C3 tđ","c":"C = (C1 + C2 + C3)x3 tđ","d":"C = C1 + C2 + C3 tđ","correct":"d","level":1},{"stt":4,"question":"Để giảm dòng điện rò bề mặt của cách điện cần:","a":"Vệ sinh bề mặt cách điện","b":"Sấy khô bề mặt cách điện","c":"Cả a, b đều sai","d":"Cả a, b đều đúng","correct":"d","level":1},{"stt":5,"question":"Contactor dập hồ quang bằng cách nào?","a":"Chia nhỏ hồ quang","b":"Kéo dài chiều dài hồ quang","c":"Cả a, b đều sai","d":"Cả a, b đều đúng","correct":"d","level":1},{"stt":6,"question":"MCB, MCCB dập hồ quang bằng cách nào?","a":"Chia nhỏ hồ quang","b":"Kéo dài chiều dài hồ quang","c":"Cả a, b đều sai","d":"Cả a, b đều đúng","correct":"d","level":1},{"stt":7,"question":"Mục đích của chân không trong buồng dập hồ quang của máy cắt chân không?","a":"Duy trì trạng thái cách điện","b":"Dập hồ quang","c":"Chống phân hủy kim loại","d":"Cả a, b và c.","correct":"d","level":1},{"stt":8,"question":"Dầu cách điện của máy biến áp là gì?","a":"Cách điện","b":"Tản nhiệt","c":"Dập hồ quang","d":"Cả a, b và c.","correct":"d","level":1},{"stt":9,"question":"Máy điện tĩnh làm việc theo nguyên lý cảm ứng điện từ giữa những cuộn dây không có chuyển động tương đối với nhau. Loại máy điện tĩnh thông dụng là:","a":"Máy biến áp","b":"Máy phát điện","c":"Động cơ điện","d":"Máy điện một chiều.","correct":"a","level":1},{"stt":10,"question":"Biến dòng điện có tác dụng gì?","a":"Có tác dụng cách ly giữa phần sơ cấp với thứ cấp","b":"Có nhiệm vụ dùng để biến đổi dòng điện từ trị số lớn xuống trị số nhỏ hơn để cung cấp cho các dụng cụ đo lường, bảo vệ, tự động hóa","c":"Cả a và b đều sai","d":"Cả a và b đều đúng","correct":"d","level":1},{"stt":11,"question":"Mạch nhị thứ là gì ?","a":"Là mạch có chức năng kiểm soát sự vận hành của mạch nhất thứ","b":"Bao gồm điều khiển, chỉ thị trạng thái, đo đếm thông số điện và bảo vệ nhất thứ","c":"Bao gồm điều khiển, chỉ thị trạng thái, chỉ thị cảnh báo, đo đếm thông số điện và bảo vệ nhất thứ","d":"Cả a, b và c","correct":"d","level":2},{"stt":12,"question":"Nối đất của giáp cáp lực, giáp cáp điều khiển thuộc loại nối đất nào?","a":"Nối đất làm việc","b":"Nối đất an toàn hay nối đất bảo vệ","c":"Nối đất chống sét","d":"Cả a, b và c","correct":"b","level":2},{"stt":13,"question":"Nối đất vỏ máy, vỏ tủ thiết bị thuộc loại nối đất nào?","a":"Nối đất làm việc","b":"Nối đất an toàn hay nối đất bảo vệ","c":"Nối đất chống sét","d":"Cả a, b và c","correct":"b","level":2},{"stt":14,"question":"Nối đất trung tính MBA thuộc loại nối đất nào?","a":"Nối đất làm việc","b":"Nối đất an toàn hay nối đất bảo vệ","c":"Nối đất chống sét","d":"Cả a, b và c","correct":"a","level":2},{"stt":15,"question":"Có những loại cách điện chính nào sau đây?","a":"Cách điện rắn","b":"Cách điện lỏng","c":"Cách điện khí","d":"Cả a, b và c đều đúng","correct":"d","level":2},{"stt":16,"question":"Đối với máy biến điện áp thì không thể:","a":"Hở mạch thứ cấp","b":"Ngắn mạch thứ cấp","c":"Cả a, b đều sai","d":"Cả a, b đều đúng","correct":"b","level":2},{"stt":17,"question":"Đối với máy biến dòng điện thì không thể:","a":"Hở mạch thứ cấp","b":"Ngắn mạch thứ cấp","c":"Cả a, b đều sai","d":"Cả a, b đều đúng","correct":"a","level":2},{"stt":18,"question":"Để đo cường độ dòng điện ta dùng:","a":"Công tơ điện","b":"Ampe kế","c":"Vôn kế","d":"Watt kế","correct":"b","level":2},{"stt":19,"question":"Để đo cường độ điện áp ta dùng:","a":"Công tơ điện","b":"Ampe kế","c":"Vôn kế","d":"Watt kế","correct":"c","level":2},{"stt":20,"question":"Chọn câu đúng: Máy cắt ACB là máy cắt:","a":"Chỉ sử dụng ở cấp điện áp hạ áp","b":"Có điều khiển đóng mở từ xa","c":"Là máy cắt có buồng dập hồ quang là không khí","d":"Cả a, b và c","correct":"d","level":2},{"stt":21,"question":"MBA là loại máy dùng để?","a":"Biến đổi điện áp và tần số của dòng điện xoay chiều","b":"Biến đổi điện áp và giữ nguyên tần số của dòng điện xoay chiều","c":"Biến đổi điện áp, cường độ và tần số của dòng điện xoay chiều","d":"Biến đổi điện áp và giữ nguyên tần số của dòng điện một chiều","correct":"b","level":3},{"stt":22,"question":"Khi gọi tên dụng cụ đo: Vôn kế, Ampe Kế, Công tơ… là ta phân loại dụng cụ đo lường dựa theo","a":"Nguyên lý làm việc","b":"Đại lượng cần đo","c":"Hình dạng, trọng lương và cấp chính xác","d":"Hình dạng, trọng lượng và cấp chính xác","correct":"b","level":3},{"stt":23,"question":"Cầu chì là khí cụ điện dùng để:","a":"Lọc tín hiệu","b":"Đóng cắt thiết bị điện","c":"Bảo vệ quá tải và ngắn mạch","d":"Điều khiển mạch điện","correct":"c","level":3},{"stt":24,"question":"Sự cố ngắn mạch còn được gọi là:","a":"Ngắt mạch","b":"Hở mạch","c":"Chập mạch","d":"Cắt mạch","correct":"c","level":3},{"stt":25,"question":"Mục đích của việc đo điện trở 1 chiều của cuộn dây là?","a":"Xác định được tình trạng của cuộn dây","b":"Xác định được tình trạng các chỗ tiếp xúc","c":"Để xác định cách điện cuộn dây","d":"Cả a, b đều đúng","correct":"d","level":3},{"stt":26,"question":"Quá điện áp là trạng thái được đặt vào thiết bị điện 1 điện áp?","a":"U= Uđm","b":"U< Uđm","c":"U= U.I.cos j","d":"U> Uđm","correct":"d","level":3},{"stt":27,"question":"Đối với MBA 2 cuộn dây, qui định đo cách điện là:","a":"Cao - Hạ/ Cao - đất","b":"Chỉ cần cao - đất/ Hạ - đất là đủ","c":"Cao - (Hạ+ Vỏ+đất) và Hạ - (Cao+vỏ+đất)","d":"Cao-(Hạ+ Vỏ+đất) và Hạ-đất","correct":"c","level":3},{"stt":28,"question":"Khi thiết bị điện bị rò điện ra vỏ thì tác hại chính là:","a":"Thiết bị không hoạt động tốt","b":"Thiết bị không hoạt động được","c":"Nguy hiểm cho người sử dụng khi chạm vào vỏ thiết bị","d":"Thiết bị dễ bị quá tải","correct":"c","level":3},{"stt":29,"question":"Nguồn điện áp 3 pha đối xứng là nguồn:","a":"3 điện áp bằng nhau về biên độ và cùng pha","b":"3 điện áp khác nhau về biên độ và lệch nhau 120 độ","c":"3 điện áp khác nhau về biên độ và cùng pha nhau","d":"3 điện áp pha bằng nhau về biên độ và lệch pha nhau 120 độ","correct":"d","level":3},{"stt":30,"question":"Dầu cách điện trong máy biến áp có tác dụng:","a":"Tin cậy và có tính chọn lọc","b":"Có độ nhạy cao, tác động nhanh và kinh tế","c":"Chính xác tin cậy, độ nhạy cao","d":"Cả 3 yếu tố trên","correct":"d","level":3},{"stt":31,"question":"Theo ANSI, đâu là chức năng bảo vệ quá dòng có thời gian:","a":"50","b":"51","c":"67","d":"24","correct":"b","level":4},{"stt":32,"question":"Theo ANSI, đâu là chức năng bảo vệ so lệch thanh cái:","a":"87B","b":"87G","c":"87M","d":"87L","correct":"a","level":4},{"stt":33,"question":"Đặc tính thời gian phụ thuộc của chức năng 51:","a":"Thời gian tác động phụ thuộc vào giá trị dòng điện ngắn mạch, thời gian sẽ giảm khi dòng ngắn mạch tăng","b":"Thời gian tác động phụ thuộc vào giá trị dòng điện ngắn mạch, thời gian sẽ tăng khi dòng ngắn mạch tăng","c":"Thời gian tác động phụ thuộc vào giá trị dòng điện khởi động","d":"Thời gian tác động phụ thuộc vào vị trí ngắn mạch, thời gian sẽ tăng khi dòng ngắn mạch càng gần nguồn","correct":"a","level":4},{"stt":34,"question":"Công dụng của biến dòng (BI, TI hoặc CT):","a":"Máy biến dòng điện (BI, TI hoặc CT) có tác dụng cách ly giữa phần sơ cấp với thứ cấp, có nhiệm vụ dùng để biến đổi điện áp từ trị số lớn xuống trị số nhỏ hơn để cung cấp cho các dụng cụ đo lường, bảo vệ , tự động hoá","b":"Máy biến dòng điện (BI, TI hoặc CT) có tác dụng cách ly giữa phần sơ cấp với thứ cấp, có nhiệm vụ dùng để biến đổi dòng điện từ trị số lớn xuống trị số nhỏ hơn để cung cấp cho các dụng cụ đo lường, bảo vệ, tự động hoá","c":"Máy biến dòng điện (BI, TI hoặc CT) có tác dụng cách ly giữa phần sơ cấp với thứ cấp, có nhiệm vụ dùng để biến đổi tần số từ trị số lớn xuống trị số nhỏ hơn để cung cấp cho các dụng cụ đo lường, bảo vệ , tự động hoá","d":"Cả a, b, c đều đúng","correct":"b","level":4},{"stt":35,"question":"Bảo vệ so lệch là gì?","a":"Giá trị dòng điện chạy qua phần tử của hệ thống điện vượt quá trị số dòng điện tải lâu dài cho phép","b":"Bảo vệ chống ngắn mạch một pha chạm đất N(1) và hai pha chạm nhau chạm đất N(1,1)","c":"Giá trị dòng điện ở 2 đầu phần tử được so sánh với nhau. Nếu sự sai lệch giữa 2 dòng điện vượt quá trị số cho trước thì bảo vệ sẽ tác động","d":"Cả a, b, c đều đúng","correct":"c","level":4},{"stt":36,"question":"Các đại lượng cơ bản của máy biến áp gồm:","a":"Công suất định mức, điện áp định mức sơ cấp, điện áp định mức thứ cấp","b":"Dòng điện định mức sơ cấp, dòng điện định mức thứ cấp, tần số định mức","c":"Số pha, sơ đồ và tổ dấu dây, điện áp ngắn mạch, chế độ làm việc: ngắn hạn hay dài hạn","d":"Cả a, b, c","correct":"d","level":4},{"stt":37,"question":"Dao cách ly là gì?","a":"Là khí cụ điện dùng để đóng cắt mạch điện không có dòng điện hoặc dòng điện nhỏ hơn dòng điện định mức nhiều lần","b":"Tạo nên khoảng cách cách điện an toàn có thể nhìn thấy được","c":"Cả a và b đều sai","d":"Cả a và b đều đúng","correct":"d","level":4},{"stt":38,"question":"Biến dòng có ký hiệu 5P20 có nghĩa là:","a":"Biến dòng có sai số 5%, P cho biết biến dòng dùng cho bảo vệ, khi có dòng ngắn mạch bằng 20x dòng định mức vẫn đảm bảo sai số đã ghi.","b":"Cuộn này có tỷ số tuyến tính đến 5 lần dòng định mức với sai số +/-20A","c":"Cuộn này có tỉ số biến tuyến tính đến 20 lần dòng định mức với sai số +/- 5A","d":"Cuộn này có tỉ số biến tuyến tính đến 20 lần dòng định mức với sai số +5A","correct":"a","level":4},{"stt":39,"question":"Khi không sử dụng máy biến dòng cần phải:","a":"Hở mạch thứ cấp để tránh quá dòng","b":"Ngắn mạch cuộn thứ cấp để tránh quá áp gây hư hỏng cuộn dây","c":"Nối cuộn thứ cấp qua 1 tụ điện","d":"Cả b và c đều đúng.","correct":"b","level":4},{"stt":40,"question":"Dầu cách diện trong máy biến áp có tác dụng:","a":"Tác dụng cách điện","b":"Tác dụng tản nhiệt","c":"Tác dụng dập hồ quang","d":"Cả a, b, c đều đúng","correct":"d","level":4},{"stt":41,"question":"Tại sao lõi thép sử dụng trong các thiết bị điện được làm bằng lá thép kỹ thuật điện có sơn phủ cách điện?","a":"Đảm bảo dẫn từ tốt và hạn chế dòng điện Fuco","b":"Để đảm bảo dẫn từ tốt","c":"Để tăng dòng điện Fuco","d":"Để hạn chế dòng điện Fuco","correct":"a","level":5},{"stt":42,"question":"Trong quá trình làm việc, máy biến áp có các loại tổn hao nào?","a":"Tổn hao từ và tổn hao điện","b":"Chỉ có tổn hao từ","c":"Không bị tổn hao","d":"Chỉ có tổn hao điện","correct":"a","level":5},{"stt":43,"question":"Bộ thở trong máy biến áp có tác dụng gì?","a":"Trong quá trình vận hành, hoặc bảo quản MBA, dầu sẽ giãn nở theo nhiệt độ của MBA, hệ thống thở có tác dụng cân bằng áp lực trong thùng dầu và không làm cho ruột máy bị nhiễm ẩm","b":"Trong quá trình vận hành, hoặc bảo quản MBA, dầu sẽ giãn nở theo nhiệt độ của MBA","c":"Không để dầu và cuộn dây của máy biến áp tiếp xúc với không khí bên ngoài","d":"Khi nhiệt độ tăng dầu sẽ giãn nở ép không khí ra ngoài","correct":"a","level":5},{"stt":44,"question":"Khi sử dụng ampe kìm cần chú ý:","a":"Không được đo dòng điện của dây điện trần để đề phòng điện giật và ngắn mạch. Đầu tiên phải để thang đo lớn để tránh bị quá tải hoặc bị cháy","b":"Dây điện cần đo phải nằm giữa vị trí của lõi thép bao quanh và khi đo dòng xoay chiều hay một chiều cần phân biệt để thang cho đúng và nếu đo ở những cáp bọc cách điện cao áp như 3kV thì phải mang găng tay cách điện","c":"Các phương án A, B sai","d":"Các phương án A, B đúng","correct":"d","level":5},{"stt":45,"question":"Silicagel và dầu trong bộ thở của máy biến áp có tác dụng gì?","a":"Hạt silicagel dùng để hút ẩm.","b":"Dầu dùng để lọc bụi và bẫy dầu","c":"Cả a,b đều sai","d":"Cả a, b đều đúng","correct":"d","level":5},{"stt":46,"question":"Khi làm việc với máy cắt đầu cực, cần chú ý:","a":"Trước khi bảo dưỡng máy cắt, phải đảm bảo rằng máy cắt đã cắt; thực hiện các biện pháp chống đóng điện trở lại và treo biển báo","b":"Cho phép làm việc sau khi nhân viên vận hành bàn giao máy cắt","c":"Cô lập máy cắt về mọi phía. Xả điện tích dư ở tụ và cắt áp tô mát nhị thứ TU và ngắn mạch nhị thứ TI. Thông gió buồng chưa máy cắt và kết hợp biện pháp chống bụi xâm nhập","d":"Cả A và C","correct":"d","level":5},{"stt":47,"question":"Nên đo điện trở tiếp đất vào mùa nào? Tại sao?","a":"Nên đo vào mùa khô, vì suất dẫn điện của đất thấp","b":"Nên đo vào mùa mưa, vì suất dẫn điện của đất cao","c":"Đo vào mùa nào cũng được, vì suất dẫn điện không phụ thuộc vào mùa","d":"Các phương án A, B sai","correct":"a","level":5},{"stt":48,"question":"Tổ đấu dây của máy biến áp 525/22 (kV) là Dyn11, vậy phía hạ đấu kiểu gì?","a":"Tam giác","b":"Sao","c":"Sao nối đất","d":"Đấu kiểu chữ Z","correct":"c","level":5},{"stt":49,"question":"Đo thời gian chu trình C - O của máy cắt là:","a":"Thời gian đóng - cắt","b":"Thời gian Cắt - đóng","c":"Thời gian cắt","d":"Thời gian đóng","correct":"a","level":5},{"stt":50,"question":"Phát biểu nào sau đây đúng: Hệ thống kích từ của một máy phát điện có các ý nghĩa là:","a":"Quá trình tạo ra từ trường bằng dòng điện được gọi là quá trình kích từ","b":"Mục đích chính của hệ thống kích từ là điều khiển điện áp stato của máy phát điện","c":"Để duy trì máy phát ở trạng thái ổn định, hệ thống kích từ bằng việc đo dòng điện và điện áp đầu ra sẽ điều chỉnh từ trường được tạo ra trên roto","d":"Cả a, b, c","correct":"d","level":5},{"stt":51,"question":"Bộ đều áp dưới tải trong MBA (OLTC) làm nhiệm vụ gì?","a":"Nhằm duy trì điện áp đầu cuối của các hộ tiêu thụ ở mức ổn định nhất có thể dưới sự biến động của điện áp tiêu thụ do sự biến động điện áp của nguồn điện hoặc của dòng điện phụ tải thì cần phải thực hiện việc điều chỉnh điện áp","b":"Trong vận hành hệ thống điện, việc điều chỉnh điện áp là cần thiết để thực hiện điều khiển dòng công suất","c":"Các đầu phân áp được đưa ra khỏi cuộn dây và việc điều chỉnh điện áp được thực hiện bằng cách thay đổi tỉ số biến","d":"Cả a, b, c đúng","correct":"d","level":6},{"stt":52,"question":"Cấp chính xác của công tơ điện là gì?","a":"Là sự sai lệch nhiều nhất của công tơ","b":"Chỉ số công tơ so với điện năng tiêu thụ","c":"Tính theo phần trăm","d":"Cấp chính xác của công tơ điện là sự sai lệch nhiều nhất chỉ số của công tơ so với lượng điện năng tiêu thụ thực tế tính theo công tơ mẫu %.","correct":"d","level":6},{"stt":53,"question":"Điều kiện cần để máy phát hòa lưới điện là:","a":"Tần số phát bằng tần số lưới fF = fL","b":"Điện áp phát bằng điện áp lưới UF = UL","c":"Thứ tự pha trùng nhau và góc lệch pha trùng nhau","d":"Cả a,b và c","correct":"d","level":6},{"stt":54,"question":"Sự cố chạm đất (Earth Fault):","a":"Sự cố chạm đất là sự tiếp xúc điện giữa các phần đang mang điện của thiết bị điện với kết cấu không cách điện với đất, hoặc trực tiếp với đất. Sự cố chạm vỏ là hiện tượng chạm điện xảy ra giữa các bộ phận đang mang điện của thiết bị, máy móc với vỏ của chúng hoặc với các cấu trúc được nối đất","b":"Sự cố chạm đất là sự tiếp xúc điện giữa các phần đang mang điện của thiết bị điện với kết cấu không cách điện với đất","c":"Sự cố chạm đất là sự tiếp xúc điện giữa các phần đang mang điện của thiết bị điện với kết cấu không cách điện với đất, hoặc trực tiếp với đất","d":"Các phương án A, B và C đúng","correct":"a","level":6},{"stt":55,"question":"Các dòng relay bảo vệ được sử dụng ở các tủ điều khiển 11kV thuộc thanh cái 11kV Unit 1","a":"ABB REF615, ABB RET615, ABB REM620","b":"ABB REF615, ABB REB670, ABB REM620","c":"ABB REF615, ABB REF620, ABB REM620","d":"ABB REF615, ABB REF620, ABB RET615","correct":"b","level":6},{"stt":56,"question":"Các dòng relay bảo vệ được sử dụng cho bảo vệ MBA chính MAIN I, MAIN II:","a":"ABB RET650, ABB RET670","b":"ABB RET650, MICOM P645","c":"ABB RET670, MICOM P645","d":"ABB RET615, MICOM P645","correct":"c","level":6},{"stt":57,"question":"Hệ thống FBT (Fast bus transfer) chuyển đổi thanh cái nhanh của thanh cái 11kV sử dụng bộ điều khiển nào?","a":"ABB SUE 1000","b":"ABB SUE 2000","c":"ABB SUE 3000","d":"ABB SUE 4000","correct":"c","level":6},{"stt":58,"question":"Hệ thống SCNS dùng để làm gì?","a":"Giám sát máy phát","b":"Giám sát máy biến áp","c":"Giám sát tuabin","d":"Giám sát hệ thống điện","correct":"d","level":6},{"stt":59,"question":"Bộ DGA của giám sát máy biến áp chính dùng để làm gì?","a":"Giám sát dầu máy biến áp","b":"Giám sát chạm đất máy biến áp","c":"Giám sát nhiệt độ máy biến áp","d":"Giám sát công suất máy biến áp","correct":"a","level":6},{"stt":60,"question":"Hệ thống ATS của các thanh cái 400V SWGR hoạt động trên nguyên tắc nào khi chuyển giàn manual?","a":"Break before make","b":"Make before break","c":"Cả a và b đều đúng","d":"Cả a và b đều sai","correct":"b","level":6}];
+  var LEVELS = [{"level":1,"count":10,"minutes":10,"label":"Công nhân bậc 1 (10 câu, từ câu 1 đến câu 10 — thời gian làm bài: 10 phút)"},{"level":2,"count":20,"minutes":20,"label":"Công nhân bậc 2 (20 câu, từ câu 1 đến câu 20 — thời gian làm bài: 20 phút)"},{"level":3,"count":30,"minutes":30,"label":"Công nhân bậc 3 (30 câu, từ câu 1 đến câu 30 — thời gian làm bài: 30 phút)"},{"level":4,"count":40,"minutes":40,"label":"Công nhân bậc 4 (40 câu, từ câu 1 đến câu 40 — thời gian làm bài: 40 phút)"},{"level":5,"count":50,"minutes":50,"label":"Công nhân bậc 5 (50 câu, từ câu 1 đến câu 50 — thời gian làm bài: 50 phút)"},{"level":6,"count":60,"minutes":60,"label":"Công nhân bậc 6 (60 câu, từ câu 1 đến câu 60 — thời gian làm bài: 60 phút)"}];
+  var PASS_THRESHOLD_PERCENT = 80; // Ngưỡng đạt mặc định — sửa số này nếu công ty quy định khác
+
+  var STORAGE_KEY = 'quiz_candidates_congnhanmaytinh_v1';
+
+  // Mật khẩu Admin — đổi giá trị này nếu muốn. Đây CHỈ là khóa phía trình duyệt
+  // (client-side), không phải bảo mật máy chủ thực sự — bất kỳ ai xem mã nguồn
+  // trang đều có thể thấy giá trị này, nên không dùng để bảo vệ dữ liệu quan trọng.
+  var ADMIN_PASSWORD = 'HN83admin';
+
+  var state = {
+    name: '',
+    level: null,
+    pool: [],       // questions in scope for chosen level
+    answers: {},    // index -> selected key (a/b/c/d)
+    locked: {},     // index -> true once the candidate has moved away from it (or submitted)
+    current: 0,
+    isAdmin: false,
+    timeLimitSeconds: 0,
+    timeRemaining: 0,
+    timerId: null
+  };
+
+  // Thời gian làm bài mặc định nếu một bậc không khai báo "minutes" trong LEVELS —
+  // 60 giây cho mỗi câu hỏi. Có thể sửa số này hoặc sửa "minutes" trong từng bậc ở LEVELS.
+  var DEFAULT_SECONDS_PER_QUESTION = 60;
+
+  // ---------- populate level select ----------
+  var levelSelect = document.getElementById('candLevel');
+  var levelDesc = document.getElementById('levelDesc');
+  LEVELS.forEach(function (lv) {
+    var opt = document.createElement('option');
+    opt.value = lv.level;
+    opt.textContent = 'Công nhân bậc ' + lv.level + ' (' + lv.count + ' câu)';
+    levelSelect.appendChild(opt);
+  });
+  function updateLevelDesc() {
+    var lv = LEVELS.find(function (l) { return String(l.level) === levelSelect.value; });
+    levelDesc.textContent = lv ? lv.label : '';
+  }
+  levelSelect.addEventListener('change', updateLevelDesc);
+  updateLevelDesc();
+
+  // ---------- storage helpers ----------
+  function getCandidates() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveCandidates(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function recordAttempt(record) {
+    var list = getCandidates();
+    list.push(record);
+    saveCandidates(list);
+  }
+
+  function escapeHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  // ---------- login ----------
+  document.getElementById('startBtn').addEventListener('click', function () {
+    var name = document.getElementById('candName').value.trim();
+    var pass = document.getElementById('candPass').value;
+    var msg = document.getElementById('loginMsg');
+    if (!name || !pass) {
+      msg.textContent = 'Vui lòng nhập đủ họ tên và mật khẩu.';
+      return;
+    }
+    msg.textContent = '';
+    state.name = name;
+    state.level = Number(levelSelect.value);
+    var lv = LEVELS.find(function (l) { return l.level === state.level; });
+    var count = lv ? lv.count : QUESTIONS.length;
+    state.pool = QUESTIONS.slice(0, count);
+    state.answers = {};
+    state.locked = {};
+    state.current = 0;
+    state.submitted = false;
+
+    var minutes = (lv && lv.minutes) ? lv.minutes : Math.ceil((count * DEFAULT_SECONDS_PER_QUESTION) / 60);
+    state.timeLimitSeconds = minutes * 60;
+    state.timeRemaining = state.timeLimitSeconds;
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('examScreen').style.display = 'block';
+    document.getElementById('metaName').textContent = name;
+    document.getElementById('metaTotal').textContent = state.pool.length;
+    buildDots();
+    renderQuestion();
+    startTimer();
+  });
+
+  // ---------- timer ----------
+  function formatTime(totalSeconds) {
+    var s = Math.max(0, totalSeconds);
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateTimerDisplay() {
+    var el = document.getElementById('timerDisplay');
+    el.textContent = formatTime(state.timeRemaining);
+    el.classList.toggle('low', state.timeRemaining <= 60);
+  }
+
+  function startTimer() {
+    stopTimer();
+    updateTimerDisplay();
+    state.timerId = setInterval(function () {
+      state.timeRemaining--;
+      updateTimerDisplay();
+      if (state.timeRemaining <= 0) {
+        stopTimer();
+        alert('Đã hết thời gian làm bài! Bài làm sẽ được nộp tự động.');
+        gradeAndShow();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  // ---------- exam rendering ----------
+  function buildDots() {
+    var dots = document.getElementById('qDots');
+    dots.innerHTML = '';
+    state.pool.forEach(function (q, idx) {
+      var d = document.createElement('div');
+      d.className = 'q-dot';
+      d.textContent = idx + 1;
+      d.dataset.idx = idx;
+      d.addEventListener('click', function () {
+        goToQuestion(idx);
+      });
+      dots.appendChild(d);
+    });
+  }
+
+  // Khóa câu hiện tại (nếu đã chọn đáp án) rồi chuyển sang câu khác.
+  // Một khi đã rời khỏi câu hỏi, đáp án của câu đó không thể chỉnh sửa lại.
+  function goToQuestion(newIdx) {
+    if (newIdx === state.current) { return; }
+    if (state.answers[state.current] !== undefined) {
+      state.locked[state.current] = true;
+    }
+    state.current = newIdx;
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var idx = state.current;
+    var q = state.pool[idx];
+    var isLocked = !!state.locked[idx];
+    document.getElementById('metaCurrent').textContent = idx + 1;
+    document.getElementById('progressFill').style.width = (((idx + 1) / state.pool.length) * 100) + '%';
+    document.getElementById('qTag').textContent = 'Công nhân bậc ' + q.level + ' · Câu ' + (idx + 1) + ' / ' + state.pool.length;
+    document.getElementById('qText').textContent = q.question;
+
+    var optsWrap = document.getElementById('qOptions');
+    optsWrap.innerHTML = '';
+
+    var existingNote = document.getElementById('lockedNote');
+    if (existingNote) { existingNote.remove(); }
+    if (isLocked) {
+      var note = document.createElement('div');
+      note.className = 'locked-note';
+      note.id = 'lockedNote';
+      note.textContent = 'Câu này đã khóa — bạn đã chuyển câu nên không thể chọn lại đáp án khác.';
+      optsWrap.parentNode.insertBefore(note, optsWrap);
+    }
+
+    ['a', 'b', 'c', 'd'].forEach(function (key) {
+      var label = document.createElement('label');
+      label.className = 'option' + (state.answers[idx] === key ? ' selected' : '') + (isLocked ? ' locked' : '');
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'opt';
+      input.value = key;
+      input.checked = state.answers[idx] === key;
+      input.disabled = isLocked;
+      input.addEventListener('change', function () {
+        if (isLocked) { return; }
+        state.answers[idx] = key;
+        renderQuestion();
+        updateDots();
+      });
+      var span = document.createElement('span');
+      span.innerHTML = '<span class="key">' + key + '.</span> ' + escapeHtml(q[key]);
+      label.appendChild(input);
+      label.appendChild(span);
+      optsWrap.appendChild(label);
+    });
+
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === state.pool.length - 1;
+    updateDots();
+  }
+
+  function updateDots() {
+    var dots = document.getElementById('qDots').children;
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle('answered', state.answers[i] !== undefined);
+      dots[i].classList.toggle('current', i === state.current);
+    }
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function () {
+    if (state.current > 0) { goToQuestion(state.current - 1); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    if (state.current < state.pool.length - 1) { goToQuestion(state.current + 1); }
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var unanswered = state.pool.length - Object.keys(state.answers).length;
+    if (unanswered > 0) {
+      var ok = confirm('Bạn còn ' + unanswered + ' câu chưa trả lời. Những câu đó sẽ tính là sai. Nộp bài luôn?');
+      if (!ok) return;
+    }
+    gradeAndShow();
+  });
+
+  // ---------- grading ----------
+  function gradeAndShow() {
+    if (state.submitted) { return; } // chặn nộp bài 2 lần (ví dụ bấm Nộp bài đúng lúc hết giờ)
+    state.submitted = true;
+    stopTimer();
+    // Nộp bài xong: khóa toàn bộ câu hỏi, không cho sửa lại bất kỳ câu nào nữa.
+    state.pool.forEach(function (q, idx) { state.locked[idx] = true; });
+
+    var correctCount = 0;
+    var wrongList = [];
+    state.pool.forEach(function (q, idx) {
+      var picked = state.answers[idx];
+      if (picked === q.correct) {
+        correctCount++;
+      } else {
+        wrongList.push({ idx: idx, q: q, picked: picked || null });
+      }
+    });
+    var total = state.pool.length;
+    var wrongCount = total - correctCount;
+    var percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    var passed = percent >= PASS_THRESHOLD_PERCENT;
+
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('resultsScreen').style.display = 'block';
+
+    var banner = document.getElementById('resultBanner');
+    banner.className = 'result-banner ' + (passed ? 'pass' : 'fail');
+    document.getElementById('resultVerdict').textContent = passed ? 'ĐẠT' : 'KHÔNG ĐẠT';
+    document.getElementById('resultSub').textContent =
+      state.name + ' — Công nhân bậc ' + state.level + ' — ' + correctCount + '/' + total + ' câu đúng (' + percent + '%). Ngưỡng đạt: ' + PASS_THRESHOLD_PERCENT + '%.';
+
+    document.getElementById('statCorrect').textContent = correctCount;
+    document.getElementById('statWrong').textContent = wrongCount;
+    document.getElementById('statPercent').textContent = percent + '%';
+
+    var reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '';
+    if (wrongList.length === 0) {
+      var p = document.createElement('p');
+      p.style.color = 'var(--steel)';
+      p.textContent = 'Không có câu nào sai — làm đúng hết!';
+      reviewList.appendChild(p);
+    } else {
+      wrongList.forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'review-item';
+        var yourAnswerText = item.picked ? (item.picked + '. ' + item.q[item.picked]) : '(không trả lời)';
+        var correctAnswerText = item.q.correct + '. ' + item.q[item.q.correct];
+        div.innerHTML =
+          '<div class="q-text">Câu ' + (item.idx + 1) + ': ' + escapeHtml(item.q.question) + '</div>' +
+          '<div class="review-row your-wrong"><span class="tag">Bạn chọn:</span>' + escapeHtml(yourAnswerText) + '</div>' +
+          '<div class="review-row correct-answer"><span class="tag">Đáp án đúng:</span>' + escapeHtml(correctAnswerText) + '</div>';
+        reviewList.appendChild(div);
+      });
+    }
+
+    // store this attempt so it can be reviewed later (per-browser storage)
+    var saveStatusEl = document.getElementById('saveStatus');
+    try {
+      recordAttempt({
+        name: state.name,
+        level: state.level,
+        total: total,
+        correct: correctCount,
+        wrong: wrongCount,
+        percent: percent,
+        passed: passed,
+        timestamp: new Date().toISOString(),
+        wrongQuestions: wrongList.map(function (item) {
+          return { stt: item.q.stt, picked: item.picked, correct: item.q.correct };
+        })
+      });
+      saveStatusEl.classList.remove('error');
+      saveStatusEl.textContent = '✓ Đã lưu kết quả bài làm vào trình duyệt này.';
+    } catch (e) {
+      saveStatusEl.classList.add('error');
+      saveStatusEl.textContent = '⚠ Không lưu được kết quả (trình duyệt chặn lưu trữ cục bộ). Vui lòng chụp lại màn hình kết quả.';
+    }
+  }
+
+  document.getElementById('retakeBtn').addEventListener('click', function () {
+    stopTimer();
+    document.getElementById('resultsScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('candPass').value = '';
+  });
+
+  // ============================================================
+  // ---------- Admin: đăng nhập, xem/xuất/xóa dữ liệu thí sinh ----------
+  // Đây là cơ chế bảo vệ PHÍA TRÌNH DUYỆT (client-side) để thuận tiện,
+  // không phải bảo mật máy chủ thực sự. Bất kỳ ai có quyền xem mã nguồn
+  // trang đều có thể thấy ADMIN_PASSWORD, nên đừng dùng để bảo vệ dữ liệu
+  // thật sự quan trọng hay bí mật.
+  // ============================================================
+
+  document.getElementById('adminLoginLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminLoginScreen').style.display = 'block';
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminLoginMsg').textContent = '';
+  });
+
+  document.getElementById('adminBackLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  document.getElementById('adminLoginBtn').addEventListener('click', function () {
+    var pass = document.getElementById('adminPass').value;
+    if (pass !== ADMIN_PASSWORD) {
+      document.getElementById('adminLoginMsg').textContent = 'Sai mật khẩu Admin.';
+      return;
+    }
+    state.isAdmin = true;
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    renderAdminTable();
+  });
+
+  document.getElementById('adminLogoutBtn').addEventListener('click', function () {
+    state.isAdmin = false;
+    document.getElementById('adminScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  function fmtTimestamp(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString('vi-VN');
+    } catch (e) { return iso || ''; }
+  }
+
+  function renderAdminTable() {
+    var list = getCandidates();
+    var tbody = document.getElementById('adminTbody');
+    tbody.innerHTML = '';
+    if (list.length === 0) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="8" style="color:var(--steel);">Chưa có dữ liệu thí sinh nào được lưu trên trình duyệt này.</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+    list.forEach(function (rec, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(rec.name) + '</td>' +
+        '<td>' + escapeHtml(rec.level) + '</td>' +
+        '<td>' + escapeHtml(rec.correct) + '</td>' +
+        '<td>' + escapeHtml(rec.wrong) + '</td>' +
+        '<td>' + escapeHtml(rec.percent) + '%</td>' +
+        '<td class="' + (rec.passed ? 'pass-tag' : 'fail-tag') + '">' + (rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT') + '</td>' +
+        '<td>' + escapeHtml(fmtTimestamp(rec.timestamp)) + '</td>' +
+        '<td class="row-actions"></td>';
+      var actionsTd = tr.querySelector('.row-actions');
+
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.textContent = 'Sửa';
+      editBtn.addEventListener('click', function () { editCandidateRecord(i); });
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = 'Xóa';
+      delBtn.addEventListener('click', function () { deleteCandidateRecord(i); });
+
+      actionsTd.appendChild(editBtn);
+      actionsTd.appendChild(delBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Admin sửa lại số câu đúng đã ghi nhận cho một thí sinh (ví dụ khi cần
+  // hiệu chỉnh do lỗi chấm) — hệ thống tự tính lại số câu sai, tỷ lệ và kết quả đạt/không đạt.
+  function editCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var input = prompt('Nhập lại số câu đúng cho ' + rec.name + ' (tổng ' + rec.total + ' câu):', rec.correct);
+    if (input === null) { return; }
+    var newCorrect = parseInt(input, 10);
+    if (isNaN(newCorrect) || newCorrect < 0 || newCorrect > rec.total) {
+      alert('Giá trị không hợp lệ. Vui lòng nhập số từ 0 đến ' + rec.total + '.');
+      return;
+    }
+    rec.correct = newCorrect;
+    rec.wrong = rec.total - newCorrect;
+    rec.percent = rec.total > 0 ? Math.round((newCorrect / rec.total) * 100) : 0;
+    rec.passed = rec.percent >= PASS_THRESHOLD_PERCENT;
+    rec.editedByAdminAt = new Date().toISOString();
+    list[i] = rec;
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  function deleteCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var ok = confirm('Xóa kết quả của ' + rec.name + '? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    list.splice(i, 1);
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  document.getElementById('clearAllBtn').addEventListener('click', function () {
+    var ok = confirm('Xóa TOÀN BỘ dữ liệu thí sinh đã lưu trên trình duyệt này? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    saveCandidates([]);
+    renderAdminTable();
+  });
+
+  document.getElementById('exportXlsxBtn').addEventListener('click', function () {
+    var warnEl = document.getElementById('xlsxWarning');
+    if (typeof XLSX === 'undefined') {
+      warnEl.style.display = 'block';
+      warnEl.textContent = '⚠ Không tải được thư viện xuất Excel (cần có kết nối internet). Vui lòng dùng nút "Tải danh sách (CSV)" — file CSV vẫn mở được trực tiếp bằng Excel.';
+      return;
+    }
+    warnEl.style.display = 'none';
+    var list = getCandidates();
+    var header = ['Họ tên', 'Bậc', 'Tổng số câu', 'Câu đúng', 'Câu sai', 'Tỷ lệ (%)', 'Kết quả', 'Thời gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [ { wch: 22 }, { wch: 6 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 } ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Danh sach thi sinh');
+    XLSX.writeFile(wb, 'danh-sach-thi-sinh.xlsx');
+  });
+
+  document.getElementById('exportCsvBtn').addEventListener('click', function () {
+    var list = getCandidates();
+    var header = ['Ho ten', 'Bac', 'Tong so cau', 'Cau dung', 'Cau sai', 'Ty le (%)', 'Ket qua', 'Thoi gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'DAT' : 'KHONG DAT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        var s = String(cell == null ? '' : cell);
+        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+          s = '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'danh-sach-thi-sinh.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------- In kết quả ----------
+  var printBtnEl = document.getElementById('printResultBtn');
+  if (printBtnEl) {
+    printBtnEl.addEventListener('click', function () {
+      var meta = document.getElementById('printMeta');
+      if (meta) {
+        var now = new Date();
+        var ts = now.toLocaleString('vi-VN');
+        meta.textContent = 'Ngày in: ' + ts;
+      }
+      window.print();
+    });
+  }
+</script>
+
+</body>
+</html>

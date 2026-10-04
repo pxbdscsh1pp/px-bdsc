@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thi trắc nghiệm — Tổ trưởng, Tổ phó, Trưởng kíp Tổ gia công</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --ink: #142621;
+    --panel-dark: #0E2A24;
+    --panel-dark-2: #16362E;
+    --paper: #EDEFEA;
+    --paper-2: #FFFFFF;
+    --line: #CBD1C8;
+    --steel: #5C6B64;
+    --amber: #E8A33D;
+    --amber-deep: #C97F1F;
+    --blue: #3E7C9A;
+    --pass: #3F7D5C;
+    --pass-soft: #E4F1E8;
+    --fail: #AF4B36;
+    --fail-soft: #F7E7E1;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
+  h1, h2, h3 { font-weight: 700; line-height: 1.2; margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Home button ---------- */
+  .home-btn {
+    position: fixed; top: 16px; left: 16px; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--panel-dark); color: #FFFFFF; text-decoration: none;
+    font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border: none;
+  }
+  .home-btn:hover { background: var(--panel-dark-2); }
+
+  header.top {
+    background: var(--panel-dark);
+    color: #FFFFFF;
+    padding: 60px 20px 34px;
+    text-align: center;
+    border-bottom: 3px solid var(--amber);
+  }
+  header.top .eyebrow { color: var(--amber); font-weight: 600; font-size: 0.88rem; margin-bottom: 10px; }
+  header.top h1 { font-size: clamp(1.5rem, 3.4vw, 2rem); max-width: 30ch; margin: 0 auto; }
+  header.top p { color: #C7D3CC; margin-top: 12px; font-size: 0.95rem; }
+
+  .card {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    padding: 28px 26px;
+    margin-top: -24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen .field { margin-bottom: 18px; }
+  #loginScreen label { display: block; font-size: 0.86rem; font-weight: 600; color: var(--steel); margin-bottom: 6px; }
+  #loginScreen input, #loginScreen select {
+    width: 100%; padding: 11px 13px; font-family: inherit; font-size: 0.98rem;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  #loginScreen input:focus, #loginScreen select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .btn {
+    display: inline-block; padding: 13px 24px; font-weight: 600; font-size: 0.95rem;
+    border: 2px solid transparent; background: var(--amber); color: var(--panel-dark);
+    width: 100%; text-align: center;
+  }
+  .btn:hover { background: var(--amber-deep); }
+  .btn-secondary { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-secondary:hover { border-color: var(--amber); }
+  .form-msg { font-size: 0.86rem; min-height: 1.2em; margin-top: 4px; color: var(--fail); }
+  .level-desc { font-size: 0.82rem; color: var(--steel); margin-top: 6px; }
+
+  /* ---------- Exam screen ---------- */
+  #examScreen { display: none; }
+  .exam-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.86rem; color: var(--steel); margin-bottom: 18px; flex-wrap: wrap; gap: 8px;
+  }
+  .exam-meta strong { color: var(--ink); }
+  .exam-meta .timer { font-weight: 700; color: var(--panel-dark); background: var(--paper); border: 1px solid var(--line); padding: 4px 10px; }
+  .exam-meta .timer.low { color: #FFFFFF; background: var(--fail); border-color: var(--fail); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .progress-track { height: 6px; background: var(--paper); border: 1px solid var(--line); margin-bottom: 24px; }
+  .progress-fill { height: 100%; background: var(--amber); transition: width 0.2s ease; }
+
+  .q-tag { color: var(--blue); font-weight: 600; font-size: 0.86rem; margin-bottom: 8px; }
+  .q-text { font-size: 1.08rem; font-weight: 600; margin-bottom: 20px; }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 12px;
+    border: 1px solid var(--line); padding: 13px 16px; cursor: pointer;
+    background: var(--paper-2);
+  }
+  .option:hover { border-color: var(--amber); }
+  .option.selected { border-color: var(--blue); background: #EAF1F4; }
+  .option.locked { opacity: 0.62; cursor: default; }
+  .option.locked:hover { border-color: var(--line); }
+  .option input { margin-top: 3px; accent-color: var(--blue); flex-shrink: 0; }
+  .option span.key { font-weight: 700; text-transform: uppercase; margin-right: 4px; }
+  .locked-note { font-size: 0.82rem; color: var(--fail); margin: -12px 0 16px; font-weight: 600; }
+
+  .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  .nav-row .btn, .nav-row button { flex: 1; }
+
+  .q-dots { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .q-dot {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.76rem; font-weight: 600; border: 1px solid var(--line); background: var(--paper-2);
+    color: var(--steel); cursor: pointer;
+  }
+  .q-dot.answered { background: var(--panel-dark-2); color: #FFFFFF; border-color: var(--panel-dark-2); }
+  .q-dot.current { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+  /* ---------- Results screen ---------- */
+  #resultsScreen { display: none; }
+  .result-banner {
+    text-align: center; padding: 30px 20px; margin-bottom: 24px;
+  }
+  .result-banner.pass { background: var(--pass-soft); border: 1px solid var(--pass); }
+  .result-banner.fail { background: var(--fail-soft); border: 1px solid var(--fail); }
+  .result-banner .verdict { font-size: 1.7rem; font-weight: 700; }
+  .result-banner.pass .verdict { color: var(--pass); }
+  .result-banner.fail .verdict { color: var(--fail); }
+  .result-banner .sub { margin-top: 6px; color: var(--steel); font-size: 0.95rem; }
+
+  .stat-row { display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 28px; }
+  .stat-box { flex: 1; background: var(--paper-2); text-align: center; padding: 18px 10px; }
+  .stat-box .num { font-size: 1.6rem; font-weight: 700; }
+  .stat-box .label { font-size: 0.78rem; color: var(--steel); margin-top: 4px; }
+  .stat-box.correct .num { color: var(--pass); }
+  .stat-box.wrong .num { color: var(--fail); }
+
+  .review-item { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .review-item:last-child { border-bottom: none; }
+  .review-item .q-text { font-size: 0.98rem; margin-bottom: 10px; }
+  .review-row { font-size: 0.88rem; margin-bottom: 4px; }
+  .review-row .tag { font-weight: 700; margin-right: 6px; }
+  .review-row.your-wrong .tag { color: var(--fail); }
+  .review-row.correct-answer .tag { color: var(--pass); }
+
+  .result-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .result-actions > * { flex: 1; min-width: 160px; }
+  .save-status { font-size: 0.86rem; color: var(--pass); margin-top: 8px; font-weight: 600; }
+  .save-status.error { color: var(--fail); }
+
+  /* ---------- Admin ---------- */
+  .admin-link-row { text-align: center; margin-top: 18px; }
+  .admin-link-row a { font-size: 0.84rem; color: var(--steel); text-decoration: underline; }
+  #adminLoginScreen, #adminScreen { display: none; }
+  .admin-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .admin-bar .btn-secondary { width: auto; padding: 9px 16px; }
+  .admin-note { font-size: 0.82rem; color: var(--steel); background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; margin-bottom: 20px; }
+  table.admin-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  table.admin-table th, table.admin-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  table.admin-table th { color: var(--steel); font-size: 0.78rem; text-transform: uppercase; }
+  table.admin-table .pass-tag { color: var(--pass); font-weight: 700; }
+  table.admin-table .fail-tag { color: var(--fail); font-weight: 700; }
+  table.admin-table .row-actions button { font-size: 0.78rem; padding: 5px 9px; margin-right: 4px; border: 1px solid var(--line); background: var(--paper-2); }
+  table.admin-table .row-actions button:hover { border-color: var(--amber); }
+  .admin-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+
+  @media (max-width: 600px) {
+    .card { padding: 22px 18px; }
+    .nav-row { flex-direction: column; }
+  }
+
+  /* ---------- In kết quả ---------- */
+  .print-meta { display:none; }
+  @media print {
+    .no-print, .home-btn { display: none !important; }
+    #loginScreen, #examScreen, #adminLoginScreen, #adminScreen { display: none !important; }
+    body { background: #fff !important; color:#000 !important; }
+    .card { box-shadow:none !important; border:1px solid #999 !important; }
+    .print-meta { display:block !important; margin-bottom:14px; font-size:13px; color:#444; }
+  }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="index.html" title="Về trang chủ">⌂</a>
+
+<header class="top">
+  <div class="eyebrow">NHÀ MÁY NHIỆT ĐIỆN SÔNG HẬU 1-PVPGB_PX BDSC THI TRẮC NGHIỆM</div>
+  <h1>Đề thi Tổ trưởng, Tổ phó — Tổ gia công</h1>
+  <p>Đăng nhập họ tên và mật khẩu để bắt đầu làm bài.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card" id="loginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập làm bài</h2>
+    <div class="field">
+      <label for="candName">Họ và tên</label>
+      <input type="text" id="candName" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="candPass">Mật khẩu</label>
+      <input type="password" id="candPass" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label for="candLevel">Chọn bậc thi</label>
+      <select id="candLevel"></select>
+      <div class="level-desc" id="levelDesc"></div>
+    </div>
+    <div class="form-msg" id="loginMsg"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài</button>
+    <div class="admin-link-row"><a href="#" id="adminLoginLink">Quản trị viên (Admin)</a></div>
+  </div>
+
+  <div class="card" id="adminLoginScreen">
+    <h2 style="margin-bottom: 20px;">Đăng nhập Admin</h2>
+    <div class="field">
+      <label for="adminPass">Mật khẩu Admin</label>
+      <input type="password" id="adminPass" autocomplete="off" />
+    </div>
+    <div class="form-msg" id="adminLoginMsg"></div>
+    <button class="btn" id="adminLoginBtn" type="button">Đăng nhập</button>
+    <div class="admin-link-row"><a href="#" id="adminBackLink">← Quay lại đăng nhập thí sinh</a></div>
+  </div>
+
+  <div class="card" id="adminScreen">
+    <div class="admin-bar">
+      <h2>Bảng quản trị — Dữ liệu thí sinh</h2>
+      <button class="btn btn-secondary" id="adminLogoutBtn" type="button">Đăng xuất</button>
+    </div>
+    <div class="admin-note">Dữ liệu này chỉ lưu trên trình duyệt hiện tại (localStorage), không đồng bộ giữa các máy. Đây là quyền quản trị phía trình duyệt, không phải cơ chế bảo mật máy chủ thực sự.</div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Họ tên</th><th>Bậc</th><th>Đúng</th><th>Sai</th><th>Tỷ lệ</th><th>Kết quả</th><th>Thời gian</th><th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="adminTbody"></tbody>
+      </table>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="exportXlsxBtn" type="button">Xuất file Excel (.xlsx)</button>
+      <button class="btn btn-secondary" id="exportCsvBtn" type="button">Tải danh sách (CSV)</button>
+      <button class="btn btn-secondary" id="clearAllBtn" type="button">Xóa toàn bộ dữ liệu</button>
+    </div>
+    <div id="xlsxWarning" class="form-msg" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="examScreen">
+    <div class="exam-meta">
+      <span>Thí sinh: <strong id="metaName"></strong></span>
+      <span>Câu <strong id="metaCurrent"></strong>/<span id="metaTotal"></span></span>
+      <span class="timer" id="timerDisplay">--:--</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="q-tag" id="qTag"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="qOptions"></div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" id="prevBtn" type="button">← Câu trước</button>
+      <button class="btn btn-secondary" id="nextBtn" type="button">Câu sau →</button>
+    </div>
+
+    <div class="q-dots" id="qDots"></div>
+    <button class="btn" id="submitBtn" type="button" style="margin-top: 10px;">Nộp bài</button>
+  </div>
+
+  <div class="card" id="resultsScreen">
+    <div class="result-banner" id="resultBanner">
+      <div class="verdict" id="resultVerdict"></div>
+      <div class="sub" id="resultSub"></div>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box correct"><div class="num" id="statCorrect"></div><div class="label">Câu đúng</div></div>
+      <div class="stat-box wrong"><div class="num" id="statWrong"></div><div class="label">Câu sai</div></div>
+      <div class="stat-box"><div class="num" id="statPercent"></div><div class="label">Tỷ lệ đúng</div></div>
+    </div>
+    <h3 style="margin-bottom: 14px;">Xem lại các câu sai</h3>
+    <div id="reviewList"></div>
+    <div class="print-meta" id="printMeta"></div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="retakeBtn" type="button">Làm lại</button>
+      <button class="btn btn-secondary no-print" id="printResultBtn" type="button">In kết quả</button>
+      <a class="btn" href="index.html" style="text-align:center;">Về trang chủ</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var QUESTIONS = [{"stt":1,"question":"Góc đỉnh của mũi khoan (2α) khi khoan vật liệu Thép thường là bao nhiêu?","a":"90°","b":"118° - 120°","c":"135°","d":"50°","correct":"b","level":1},{"stt":2,"question":"Khi khoan vật liệu Gang cứng và Thép không gỉ, thông số góc đỉnh mũi khoan 2α được quy định là:","a":"135°","b":"118°","c":"90°","d":"50°","correct":"a","level":1},{"stt":3,"question":"Trong quy trình gá dao tiện lỗ, bước đầu tiên người thợ cần thực hiện là gì?","a":"Lấy chiều sâu cắt","b":"Sửa lại chiều dài cho chính xác","c":"Lấy dấu chiều dài l của lỗ (bằng du xích hoặc vạch trên cán dao)","d":"Cho dao tiến cắt đến hết chiều dài lỗ","correct":"c","level":1},{"stt":4,"question":"Sau khi cho dao tiến cắt đến hết chiều dài lỗ ở bước 3 của quy trình tiện lỗ, người thợ cần làm gì tiếp theo?","a":"Tắt máy để kiểm tra đường kính và chiều dài lỗ","b":"Lấy chiều sâu cắt tinh ngay lập tức","c":"Tăng tốc độ quay của trục chính","d":"Lùi dao ra và kết thúc nguyên công","correct":"a","level":1},{"stt":5,"question":"Dạng khuyết tật nào sau đây KHÔNG thuộc các dạng khuyết tật cơ bản trong mối hàn được nêu trong tài liệu?","a":"Khuyết tật rỗ hơi","b":"Khuyết tật lẫn xỉ","c":"Khuyết tật cong vênh phôi do nhiệt","d":"Khuyết tật hàn không ngấu","correct":"c","level":1},{"stt":6,"question":"Hiện tượng mối hàn bị \"cháy cạnh\" hoặc \"đóng cục\" thuộc nhóm câu hỏi nào trong đề thi nâng bậc?","a":"Các thông số hình học mũi khoan","b":"Các bước gá dao tiện lỗ","c":"Các dạng khuyết tật cơ bản trong mối hàn","d":"Các dạng hư hỏng trong bộ truyền bánh răng","correct":"c","level":1},{"stt":7,"question":"Ứng suất uốn gây ra hiện tượng hư hỏng nào phổ biến nhất đối với những bộ truyền bánh răng hở?","a":"Tróc vì mỏi bề mặt","b":"Gãy răng","c":"Dính răng","d":"Biến dạng dẻo bề mặt răng","correct":"b","level":1},{"stt":8,"question":"Hiện tượng \"Bong bề mặt răng\" trong bộ truyền bánh răng thường xảy ra trong trường hợp nào?","a":"Khi làm việc với vận tốc và công suất lớn","b":"Ở những cặp bánh răng có độ rắn bề mặt thấp","c":"Ở các răng được thấm Nitơ, thấm Cácbon hoặc tôi bề mặt có chất lượng không tốt và chịu tải trọng quá lớn","d":"Do ma sát khô kéo dài trong bộ truyền hở","correct":"c","level":1},{"stt":9,"question":"Dựa vào cách phân loại theo thành phần thuốc bọc, que hàn được chia làm các loại nào?","a":"Que hàn chịu nhiệt và que hàn gang","b":"Que hàn có tính axit và que hàn có tính kiềm","c":"Que hàn thép cacbon thấp và hợp kim cao","d":"Que hàn lớp bọc mỏng và lớp bọc dày","correct":"b","level":1},{"stt":10,"question":"Phương pháp nào sau đây KHÔNG phải là phương pháp phân loại que hàn được nhắc đến trong tài liệu?","a":"Phân loại theo đường kính lõi que hàn","b":"Phân loại theo vị trí không gian hàn","c":"Phân loại theo cường độ chống kéo","d":"Phân loại theo chiều dày lớp thuốc bọc","correct":"a","level":1},{"stt":11,"question":"Yêu cầu nào sau đây KHÔNG phải là yêu cầu cơ bản đối với mũi khoan và khoan lỗ?","a":"Lỗ khoan không bị rộng","b":"Lỗ khoan phải tròn (không bị ô van)","c":"Lỗ khoan phải trùng tâm và thẳng tâm","d":"Lỗ khoan bắt buộc phải có vát mép cạnh sắc","correct":"d","level":2},{"stt":12,"question":"Kiểm tra đá mài và kiểm tra khoảng cách bệ tỳ so với đá xem có đảm bảo an toàn không là công việc thuộc bước mấy của thao tác mài dao tiện?","a":"Bước 1","b":"Bước 2","c":"Bước 3","d":"Bước 4","correct":"a","level":2},{"stt":13,"question":"Trong quá trình mài dao tiện, tư thế mài đúng kỹ thuật được quy định như thế nào?","a":"Tư thế mài phải đứng đối diện thẳng góc với đá","b":"Tư thế mài phải nghiêng so với đá","c":"Tư thế mài phải ngồi thấp hơn bệ tỳ của đá","d":"Tư thế mài tùy thuộc vào thói quen của người thợ","correct":"b","level":2},{"stt":14,"question":"Khi đá mài bị mòn không đều trong quá trình mài dao tiện, người thợ cần xử lý như thế nào theo quy trình?","a":"Thay đá mài mới ngay lập tức","b":"Dùng dao để sửa đá cho đá mòn đều sau đó mài tiếp","c":"Tăng lực ấn dao vào đá để làm phẳng đá","d":"Dịch chuyển dao tiện thật nhanh qua lại","correct":"b","level":2},{"stt":15,"question":"Dựa vào vị trí tương đối giữa các trục, bộ truyền động bánh răng có các trục song song được gọi là gì?","a":"Truyền động bánh răng côn","b":"Truyền động bánh răng trụ","c":"Truyền động bánh răng hành tinh","d":"Truyền động bánh răng di động","correct":"b","level":2},{"stt":16,"question":"Theo tính chất di động của tâm bộ truyền, truyền động bánh răng có tâm của một hoặc nhiều bánh răng di động trong mặt phẳng quay được gọi là:","a":"Truyền động bình thường","b":"Truyền động bánh răng trụ","c":"Truyền động bánh răng côn","d":"Truyền động hành tinh","correct":"d","level":2},{"stt":17,"question":"Đại lượng được định nghĩa là \"quãng đường mà bàn máy di chuyển được trong thời gian 1 phút\" khi phay là:","a":"Lượng chạy dao S","b":"Lượng chạy dao răng Sr","c":"Tốc độ cắt v","d":"Số vòng quay trục chính n","correct":"a","level":2},{"stt":18,"question":"Công thức tính mối quan hệ giữa lượng chạy dao phút (S) và lượng chạy dao răng (Sr) khi phay là:","a":"S = Sr / (Z . n)","b":"S = Sr . Z . n","c":"S = Sr . Z / n","d":"S = Sr . n / Z","correct":"b","level":2},{"stt":19,"question":"Theo thông số cơ bản của ren tam giác hệ mét, góc prôfin ren (alpha) được quy định là bao nhiêu?","a":"alpha = 55°","b":"alpha = 60°","c":"alpha = 30°","d":"alpha = 45°","correct":"b","level":2},{"stt":20,"question":"Trong các thông số cơ bản của ren tam giác hệ mét, công thức chính xác để tính đường kính chân ren (d3) theo đường kính đỉnh ren (d) và bước ren (P) là:","a":"d3 = d - 1,22686 . P","b":"d3 = d - 0,64952 . P","c":"d3 = d - 0,61343 . P","d":"d3 = d - 0,125 . P","correct":"a","level":2},{"stt":21,"question":"Phương pháp nào sau đây KHÔNG phải là phương pháp tiện côn?","a":"Phương pháp tiện côn bằng dao rộng lưỡi (định hình)","b":"Phương pháp tiện côn bằng xoay xiên bàn trượt dọc","c":"Phương pháp tiện côn bằng xê dịch ngang ụ động","d":"Phương pháp tiện côn bằng xoay đứng đài dao dọc","correct":"d","level":3},{"stt":22,"question":"Khi thực hiện thao tác mài mũi khoan ở Bước 2, đường tâm mũi khoan phải hợp với tâm quay của đá mài một góc bao nhiêu độ?","a":"45°","b":"60°","c":"90°","d":"120°","correct":"b","level":3},{"stt":23,"question":"Ở Bước 4 của quy trình mài mũi khoan, người thợ cần thực hiện động tác nào dưới đây?","a":"Nâng đuôi mũi khoan lên phía trên một chút","b":"Hạ đuôi mũi khoan xuống phía dưới một chút và xoay mũi khoan quanh đỉnh theo chiều kim đồng hồ khoảng 1/6 vòng","c":"Giữ nguyên đuôi mũi khoan và lắc mạnh sang hai bên","d":"Xoay mũi khoan ngược chiều kim đồng hồ khoảng 1/2 vòng","correct":"b","level":3},{"stt":24,"question":"Đặc điểm cơ bản của mối lắp ghép theo hệ thống lỗ là gì?","a":"Kích thước giới hạn của lỗ thay đổi, kích thước giới hạn của trục không đổi","b":"Kích thước giới hạn của lỗ không đổi, chỉ khác nhau ở kích thước giới hạn của trục","c":"Cả kích thước giới hạn của lỗ và trục đều giữ nguyên không đổi","d":"Sai lệch trên của lỗ luôn luôn bằng 0","correct":"b","level":3},{"stt":25,"question":"Trong hệ thống lỗ cơ bản, sai lệch dưới (EI) của lỗ luôn luôn bằng bao nhiêu?","a":"Luôn bằng 0","b":"Luôn lớn hơn 0","c":"Luôn nhỏ hơn 0","d":"Bằng kích thước giới hạn lớn nhất của lỗ","correct":"a","level":3},{"stt":26,"question":"Thép có tính hàn tốt khi hàm lượng các bon tương đương (Ctd) đạt giá trị nào dưới đây?","a":"Ctd lớn hơn 0,45%","b":"Ctd nằm trong khoảng từ 0,25% đến 0,45%","c":"Ctd nhỏ hơn 0,25%","d":"Ctd bằng chính xác 0,50%","correct":"c","level":3},{"stt":27,"question":"Khi hàm lượng các bon tương đương (Ctd) lớn hơn 0,45%, tính hàn của vật liệu thép được đánh giá như thế nào?","a":"Tính hàn tốt","b":"Tính hàn trung bình","c":"Tính hàn kém","d":"Không thể hàn được bằng mọi phương pháp","correct":"c","level":3},{"stt":28,"question":"Trong các kích thước chủ yếu của mối ghép then bằng, chiều dài then (l) được tính sơ bộ theo chiều rộng bạc (B) dựa trên công thức nào?","a":"l = 0,5B","b":"l = 0,8B","c":"l = 1,2B","d":"l = 1,5B","correct":"b","level":3},{"stt":29,"question":"Về chiều cao then nằm trên rãnh trục (h1) và nằm trong rãnh trên bạc (h2), mối quan hệ nào sau đây là chính xác?","a":"h1 luôn luôn nhỏ hơn h2","b":"h1 luôn lớn hơn hoặc bằng h2","c":"h1 luôn bằng một nửa h2","d":"h1 và h2 không có mối quan hệ về kích thước","correct":"b","level":3},{"stt":30,"question":"Thông thường then bằng được lắp với rãnh trên trục và rãnh trên bạc theo các kiểu lắp tiêu chuẩn nào?","a":"Rãnh trục kiểu H7/h6, rãnh bạc kiểu F7/h6","b":"Rãnh trục kiểu N9/h9, rãnh bạc kiểu Js9/h9","c":"Rãnh trục kiểu K7/h6, rãnh bạc kiểu G7/h6","d":"Rãnh trục kiểu M7/h6, rãnh bạc kiểu E7/h6","correct":"b","level":3},{"stt":31,"question":"Hệ côn Mooc tiêu chuẩn bao gồm bao nhiêu số hiệu và số hiệu nào là nhỏ nhất?","a":"6 số hiệu, nhỏ nhất là số 1","b":"7 số hiệu, nhỏ nhất là số 0","c":"8 số hiệu, nhỏ nhất là số 4","d":"5 số hiệu, nhỏ nhất là số 0","correct":"b","level":4},{"stt":32,"question":"Đối với hệ côn hệ mét tiêu chuẩn, các số hiệu (4, 6, 80, 100...) dùng để chỉ kích thước nào của bề mặt côn?","a":"Chiều dài toàn bộ bề mặt côn","b":"Đường kính nhỏ của bề mặt côn","c":"Đường kính lớn của bề mặt côn","d":"Chiều cao của profin côn","correct":"c","level":4},{"stt":33,"question":"Trong kết cấu cơ bản của trục, đoạn trục được dùng để lắp ổ trượt hoặc ổ lăn được gọi tên là gì?","a":"Thân trục","b":"Đầu trục","c":"Ngõng trục","d":"Vai trục","correct":"c","level":4},{"stt":34,"question":"Bộ phận nào trên kết cấu trục có tác dụng làm mặt tỳ để cố định các chi tiết máy lắp trên trục theo phương dọc trục?","a":"Rãnh then","b":"Bậc trục","c":"Lỗ tâm","d":"Vai trục","correct":"d","level":4},{"stt":35,"question":"Đặc điểm cơ bản của mối lắp ghép theo hệ thống trục là gì?","a":"Kích thước giới hạn của lỗ không đổi, kích thước giới hạn của trục thay đổi","b":"Kích thước giới hạn của trục không đổi, kích thước giới hạn của lỗ thay đổi","c":"Cả kích thước giới hạn của lỗ và trục đều thay đổi liên tục","d":"Sai lệch dưới của chi tiết trục luôn luôn bằng 0","correct":"b","level":4},{"stt":36,"question":"Trong hệ thống trục cơ bản, sai lệch trên (es) của chi tiết trục luôn luôn bằng bao nhiêu?","a":"Luôn bằng 0","b":"Luôn lớn hơn 0","c":"Luôn nhỏ hơn 0","d":"Bằng kích thước giới hạn nhỏ nhất của trục","correct":"a","level":4},{"stt":37,"question":"Để nhận được tổ chức Tr có tính đàn hồi tốt, quy trình nhiệt luyện của phương pháp ram quy định mức nhiệt độ ram trung bình là bao nhiêu?","a":"Từ 150° đến 250° C","b":"Từ 300° đến 450°C","c":"Từ 500° đến 650°C","d":"Từ 750° đến 800°C","correct":"b","level":4},{"stt":38,"question":"Khi thực hiện phương pháp ram cao ở nhiệt độ từ 500 đến 650 độ C, người thợ sẽ thu được tổ chức kim loại nào?","a":"Tổ chức Austenit (gamma)","b":"Tổ chức Mactenxit ram (Mr)","c":"Tổ chức Trostít ram (Tr)","d":"Tổ chức Sócbít ram (Xr)","correct":"d","level":4},{"stt":39,"question":"Khi hàn thép hợp kim trung bình, hiện tượng tự tôi xảy ra làm cho mối hàn và vùng lân cận rất dễ bị khuyết tật nào?","a":"Bị rỗ khí sâu","b":"Bị lẫn xỉ hàn","c":"Bị nứt","d":"Bị cháy thủng phôi","correct":"c","level":4},{"stt":40,"question":"Để giảm khả năng nứt khi hàn thép hợp kim trung bình, tài liệu hướng dẫn cường độ dòng điện hàn một chiều đấu nghịch được tính toán dựa theo công thức cường độ nhỏ nào sau đây?","a":"Ih = (10÷15)d","b":"Ih = (25÷30)d","c":"Ih = (40÷45)d","d":"Ih = (50÷60)d","correct":"b","level":4},{"stt":41,"question":"Trong quy trình thực hiện thao tác mài dao tiện đầu thẳng, trình tự mài các mặt của dao được tiến hành như thế nào?","a":"Mài mặt trước => Mài mặt sau phụ => Mài mặt sau chính","b":"Mài mặt sau phụ => Mài mặt trước => Mài mặt sau chính","c":"Mài mặt sau chính => Mài mặt sau phụ => Mài mặt trước của dao","d":"Mài bóng => Mài vát chỗ giao nhau => Mài mặt sau chính","correct":"c","level":5},{"stt":42,"question":"Khi mài dao tiện đầu thẳng, thông số góc alpha1 của mặt sau chính được quy định mài trong khoảng nào?","a":"Từ 0° đến 5°","b":"Từ 10° đến 15°","c":"Từ 20° đến 25°","d":"Từ 30° đến 35°","correct":"b","level":5},{"stt":43,"question":"Nội dung nào sau đây KHÔNG phải là chức năng của các điện cực hàn hồ quang?","a":"Gây và duy trì hồ quang cháy ổn định trong quá trình hàn","b":"Bảo vệ kim loại lỏng trong vũng hàn không bị tác động của môi trường khí xung quanh","c":"Tự động làm nguội nhanh mối hàn để tăng độ cứng","d":"Hợp kim hóa mối hàn và bổ sung kim loại cho mối hàn","correct":"c","level":5},{"stt":44,"question":"Sự xuất hiện của các loại khí nào trong vũng hàn là nguyên nhân chính tạo thành khuyết tật \"rỗ hơi\"?","a":"Khí Oxy và khí Cacbonic","b":"Khí Hydro và khí Nito","c":"Khí Argon và khí Heli","d":"Khí Axetilen và khí Flo","correct":"b","level":5},{"stt":45,"question":"Nguyên nhân nào sau đây dẫn đến khuyết tật mối hàn bị rỗ hơi?","a":"Dòng điện hàn quá lớn","b":"Hồ quang hàn ngắn và tốc độ hàn chậm","c":"Que hàn bị ẩm, cạnh hàn bẩn, dính dầu mỡ hoặc gỉ","d":"Hàm lượng cacbon trong kim loại cơ bản quá thấp","correct":"c","level":5},{"stt":46,"question":"Biện pháp nào sau đây giúp khắc phục khuyết tật rỗ hơi trong liên kết hàn?","a":"Kéo dài chiều dài hồ quang","b":"Tăng tốc độ hàn lên mức tối đa","c":"Làm sạch cạnh hàn và sấy khô que hàn","d":"Làm nguội thật nhanh mối hàn ngay sau khi hàn","correct":"c","level":5},{"stt":47,"question":"Ảnh hưởng của hàm lượng nguyên tố Cacbon (C) đến tính hàn của kim loại và hợp kim được quy định như thế nào?","a":"Hàm lượng cacbon càng nhỏ thì có tính hàn cao và ngược lại","b":"Hàm lượng cacbon càng lớn thì có tính hàn càng cao","c":"Hàm lượng cacbon không gây ảnh hưởng gì đến tính hàn","d":"Chỉ có thép cacbon cao mới có tính hàn tốt","correct":"a","level":5},{"stt":48,"question":"Khi hàm lượng Mangan (Mn) trong thép tăng vượt quá mức giới hạn thông thường, nó sẽ gây ra ảnh hưởng gì đến tính hàn?","a":"Làm tăng tính hàn của thép","b":"Làm giảm tính hàn của thép, tăng độ thấm tôi và dễ tạo thành vết nứt trong mối hàn","c":"Làm mối hàn bị chảy loãng mạnh và tạo ra bọt khí","d":"Không gây ra bất kỳ ảnh hưởng nào đến cấu trúc mối hàn","correct":"b","level":5},{"stt":49,"question":"Khi hàm lượng Silic (Si) tăng đến khoảng 0,8 đến 1,5% sẽ gây ra hiện tượng khó khăn gì cho quá trình hàn?","a":"Làm giảm tính chảy loãng của kim loại lỏng","b":"Làm giảm khả năng thấm tôi của vùng lân cận","c":"Tăng tính chảy loãng và tạo thành SiO2 khó nóng chảy làm mối hàn dễ bị rỗ, xỉ","d":"Làm cho mối hàn bị nứt vỡ ngay khi nguội chậm","correct":"c","level":5},{"stt":50,"question":"Trong các thông số cơ bản của bánh răng trụ răng nghiêng, công thức chính xác để tính đường kính đỉnh răng (dd) là gì?","a":"dd = d + mn","b":"dd = d + 2 . mn","c":"dd = d - 2 . mn","d":"dd = d + 2 . mS","correct":"b","level":5},{"stt":51,"question":"Bộ phận nào của máy tiện được làm bằng gang, mặt trên gồm các băng trượt phẳng và băng trượt lăng trụ dùng để dẫn hướng cho bàn xe dao và ụ động?","a":"Ụ trước","b":"Ụ sau","c":"Thân máy","d":"Bàn xe dao","correct":"c","level":6},{"stt":52,"question":"Bộ phận nào trên máy tiện có chức năng tạo ra chuyển động chạy dao dọc phụ khi tiến hành tiện côn?","a":"Bàn trượt ngang","b":"Bàn trượt dọc phụ","c":"Nòng ụ sau","d":"Trục chính rỗng","correct":"b","level":6},{"stt":53,"question":"Trong phần làm việc của mũi khoan, bộ phận nào đảm nhận nhiệm vụ cắt gọt hầu hết lượng dư gia công và có 2 lưỡi cắt chính hợp với nhau một góc khoảng 118 độ đến 120 độ?","a":"Phần sửa đúng","b":"Phần cổ mũi khoan","c":"Phần chuôi trụ","d":"Phần cắt gọt","correct":"d","level":6},{"stt":54,"question":"Kích thước đường kính của phần sửa đúng trên mũi khoan giảm dần về phía chuôi một lượng bao nhiêu nhằm mục đích giảm ma sát với vật gia công?","a":"Khoảng 0,02 mm / 100 mm chiều dài","b":"Khoảng 0,05 mm / 100 mm chiều dài","c":"Khoảng 0,08 mm / 100 mm chiều dài","d":"Khoảng 0,12 mm / 100 mm chiều dài","correct":"c","level":6},{"stt":55,"question":"Đại lượng được định nghĩa là \"góc tạo bởi hai đường sinh đối xứng qua trục của mặt côn\" khi tiện bề mặt côn là:","a":"Góc nghiêng","b":"Nửa góc côn","c":"Góc côn (2 alpha)","d":"Góc nâng ren","correct":"c","level":6},{"stt":56,"question":"Trong phương pháp tôi thuộc nhiệt luyện kết thúc, mục đích của việc nung nóng thép và làm nguội nhanh thích hợp là để tổ chức nào chuyển biến sang Mactenxit (M)?","a":"Tổ chức Austenit (gamma)","b":"Tổ chức Sócbít ram (Xr)","c":"Tổ chức Trostít ram (Tr)","d":"Tổ chức Ferit","correct":"a","level":6},{"stt":57,"question":"Phương pháp ram thuộc nhiệt luyện kết thúc bao gồm việc nung nóng thép đã tôi dưới nhiệt độ tới hạn A1 là bao nhiêu độ C?","a":"550° C","b":"650° C","c":"727° C","d":"850° C","correct":"c","level":6},{"stt":58,"question":"Đối với bánh răng trụ răng thẳng, số răng (Z) thường được chế tạo là bội số của các số nào và nằm trong phạm vi từ bao nhiêu răng?","a":"Bội số của 2 hoặc 3; từ 10 đến 500 răng","b":"Bội số của 4 hoặc 5; từ 6 đến 1000 răng","c":"Bội số của 6 hoặc 8; từ 12 đến 1200 răng","d":"Bội số của 5 hoặc 10; từ 20 đến 800 răng","correct":"b","level":6},{"stt":59,"question":"Góc ăn khớp (alpha0) của bánh răng trụ răng thẳng hợp bởi đường tiếp tuyến với sườn răng tại vòng chia với đường trục đối xứng của bánh răng thông dụng là bao nhiêu độ?","a":"15°","b":"20°","c":"30°","d":"45°","correct":"b","level":6},{"stt":60,"question":"Trong các thông số của bánh răng trụ răng thẳng, công thức chính xác để tính chiều cao răng (H) theo mô- đun ăn khớp (m) là gì?","a":"H = m","b":"H = 2 m","c":"H = 2,25 m","d":"H = 2,5 m","correct":"c","level":6},{"stt":61,"question":"Nguyên tố nào sau đây có tác dụng tích cực đến tính hàn của thép nhờ khả năng làm nhỏ hạt tinh thể, tăng độ bền và độ dẻo cho mối hàn?","a":"Crôm (Cr)","b":"Niken (Ni)","c":"Molynden (Mo)","d":"Vanađi (V)","correct":"b","level":7},{"stt":62,"question":"Khi đánh giá tác hại của các tạp chất trong thép, hiện tượng nứt nóng và nứt nguội lần lượt do các nguyên tố nào gây ra?","a":"Lưu huỳnh gây nứt nguội, Phốt pho gây nứt nóng","b":"Crôm gây nứt nóng, Niken gây nứt nguội","c":"Phốt pho gây nứt nguội, Lưu huỳnh gây nứt nóng","d":"Vonfram gây nứt nóng, Molynden gây nứt nguội","correct":"c","level":7},{"stt":63,"question":"Theo mức độ phân loại dựa trên chất lượng, loại thép chứa không quá 0,025% đối với mỗi nguyên tố Phốt pho (P) và Lưu huỳnh (S) được gọi là gì?","a":"Thép chất lượng thường","b":"Thép chất lượng tốt","c":"Thép chất lượng cao","d":"Thép chất lượng đặc biệt cao","correct":"c","level":7},{"stt":64,"question":"Nhóm thép nào trong cách phân loại theo công dụng bắt buộc phải trải qua quá trình nhiệt luyện và chủ yếu dùng làm dụng cụ cắt gọt?","a":"Thép cán nóng dùng trong xây dựng","b":"Thép dụng cụ","c":"Thép kết cấu làm chi tiết máy","d":"Thép có công dụng riêng","correct":"b","level":7},{"stt":65,"question":"Khi lập quy trình ủ cho gia công cắt, đối với phôi thép có hàm lượng các-bon nhỏ hơn 0,8% (C < 0,8%), công thức chọn nhiệt độ ủ chính xác là gì?","a":"t°ủ = AC1 + (30÷50)°C","b":"t°ủ = AC3 + (30÷50)° C","c":"t°ủ = ACcm + (30÷50)° C","d":"t°ủ = AC3 - (30÷50)° C","correct":"b","level":7},{"stt":66,"question":"Khi lập quy trình thường hóa cho sản phẩm thép có hàm lượng các-bon từ 0,8% trở lên (C >= 0,8%), nhiệt độ thường hóa được chọn theo công thức nào?","a":"t°th = AC3 + (30÷50)° C","b":"t°th = AC1 + (30÷50)° C","c":"t°th = ACcm + (30÷50)° C","d":"t°th = ACcm - (30÷50)° C","correct":"c","level":7},{"stt":67,"question":"So với hàn thép các-bon thông thường, cường độ dòng điện khi hàn thép hợp kim cao cần được điều chỉnh giảm đi bao nhiêu phần trăm?","a":"Giảm từ 5% đến 10%","b":"Giảm từ 10% đến 15%","c":"Giảm từ 15% đến 20%","d":"Giảm từ 20% đến 25%","correct":"b","level":7},{"stt":68,"question":"Khi hàn mối hàn nhiều lớp trên vật liệu thép hợp kim cao, kỹ thuật bắt buộc để tiến hành hàn lớp kế tiếp là gì?","a":"Phải thổi khí làm nguội nhanh xuống 0 độ C","b":"Phải duy trì nung nóng liên tục trên 400 độ C","c":"Phải để nguội khoảng 100 độ C mới tiến hành hàn lớp kế tiếp","d":"Hàn liên tục các lớp mà không được dừng lại","correct":"c","level":7},{"stt":69,"question":"Đại lượng góc ôm của dây đai trên bánh đai dẫn (alpha1) trong bộ truyền động đai được xác định theo công thức nào dưới đây?","a":"alpha1 = 180 + gamma","b":"alpha1 = 180 - gamma","c":"alpha1 = 90 - gamma","d":"alpha1 = 360 - gamma","correct":"b","level":7},{"stt":70,"question":"Công thức xác định góc ôm của dây đai trên bánh dẫn là:","a":"α1 = 180 + γ","b":"α1 = 180 - γ","c":"α1 = d1 + d2","d":"α1 = 2a + L","correct":"a","level":7}];
+  var LEVELS = [{"level":1,"count":10,"minutes":10,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 1 (10 câu, từ câu 1 đến câu 10 — thời gian làm bài: 10 phút)"},{"level":2,"count":20,"minutes":20,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 2 (20 câu, từ câu 1 đến câu 20 — thời gian làm bài: 20 phút)"},{"level":3,"count":30,"minutes":30,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 3 (30 câu, từ câu 1 đến câu 30 — thời gian làm bài: 30 phút)"},{"level":4,"count":40,"minutes":40,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 4 (40 câu, từ câu 1 đến câu 40 — thời gian làm bài: 40 phút)"},{"level":5,"count":50,"minutes":50,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 5 (50 câu, từ câu 1 đến câu 50 — thời gian làm bài: 50 phút)"},{"level":6,"count":60,"minutes":60,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 6 (60 câu, từ câu 1 đến câu 60 — thời gian làm bài: 60 phút)"},{"level":7,"count":70,"minutes":70,"label":"Tổ trưởng, Tổ phó, Trưởng kíp bậc 7 (70 câu, từ câu 1 đến câu 70 — thời gian làm bài: 70 phút)"}];
+  var PASS_THRESHOLD_PERCENT = 80; // Ngưỡng đạt mặc định — sửa số này nếu công ty quy định khác
+
+  var STORAGE_KEY = 'quiz_candidates_ttgiacong_v1';
+
+  // Mật khẩu Admin — đổi giá trị này nếu muốn. Đây CHỈ là khóa phía trình duyệt
+  // (client-side), không phải bảo mật máy chủ thực sự — bất kỳ ai xem mã nguồn
+  // trang đều có thể thấy giá trị này, nên không dùng để bảo vệ dữ liệu quan trọng.
+  var ADMIN_PASSWORD = 'HN83admin';
+
+  var state = {
+    name: '',
+    level: null,
+    pool: [],       // questions in scope for chosen level
+    answers: {},    // index -> selected key (a/b/c/d)
+    locked: {},     // index -> true once the candidate has moved away from it (or submitted)
+    current: 0,
+    isAdmin: false,
+    timeLimitSeconds: 0,
+    timeRemaining: 0,
+    timerId: null
+  };
+
+  // Thời gian làm bài mặc định nếu một bậc không khai báo "minutes" trong LEVELS —
+  // 60 giây cho mỗi câu hỏi. Có thể sửa số này hoặc sửa "minutes" trong từng bậc ở LEVELS.
+  var DEFAULT_SECONDS_PER_QUESTION = 60;
+
+  // ---------- populate level select ----------
+  var levelSelect = document.getElementById('candLevel');
+  var levelDesc = document.getElementById('levelDesc');
+  LEVELS.forEach(function (lv) {
+    var opt = document.createElement('option');
+    opt.value = lv.level;
+    opt.textContent = 'Bậc ' + lv.level + ' (' + lv.count + ' câu)';
+    levelSelect.appendChild(opt);
+  });
+  function updateLevelDesc() {
+    var lv = LEVELS.find(function (l) { return String(l.level) === levelSelect.value; });
+    levelDesc.textContent = lv ? lv.label : '';
+  }
+  levelSelect.addEventListener('change', updateLevelDesc);
+  updateLevelDesc();
+
+  // ---------- storage helpers ----------
+  function getCandidates() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveCandidates(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function recordAttempt(record) {
+    var list = getCandidates();
+    list.push(record);
+    saveCandidates(list);
+  }
+
+  function escapeHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  // ---------- login ----------
+  document.getElementById('startBtn').addEventListener('click', function () {
+    var name = document.getElementById('candName').value.trim();
+    var pass = document.getElementById('candPass').value;
+    var msg = document.getElementById('loginMsg');
+    if (!name || !pass) {
+      msg.textContent = 'Vui lòng nhập đủ họ tên và mật khẩu.';
+      return;
+    }
+    msg.textContent = '';
+    state.name = name;
+    state.level = Number(levelSelect.value);
+    var lv = LEVELS.find(function (l) { return l.level === state.level; });
+    var count = lv ? lv.count : QUESTIONS.length;
+    state.pool = QUESTIONS.slice(0, count);
+    state.answers = {};
+    state.locked = {};
+    state.current = 0;
+    state.submitted = false;
+
+    var minutes = (lv && lv.minutes) ? lv.minutes : Math.ceil((count * DEFAULT_SECONDS_PER_QUESTION) / 60);
+    state.timeLimitSeconds = minutes * 60;
+    state.timeRemaining = state.timeLimitSeconds;
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('examScreen').style.display = 'block';
+    document.getElementById('metaName').textContent = name;
+    document.getElementById('metaTotal').textContent = state.pool.length;
+    buildDots();
+    renderQuestion();
+    startTimer();
+  });
+
+  // ---------- timer ----------
+  function formatTime(totalSeconds) {
+    var s = Math.max(0, totalSeconds);
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateTimerDisplay() {
+    var el = document.getElementById('timerDisplay');
+    el.textContent = formatTime(state.timeRemaining);
+    el.classList.toggle('low', state.timeRemaining <= 60);
+  }
+
+  function startTimer() {
+    stopTimer();
+    updateTimerDisplay();
+    state.timerId = setInterval(function () {
+      state.timeRemaining--;
+      updateTimerDisplay();
+      if (state.timeRemaining <= 0) {
+        stopTimer();
+        alert('Đã hết thời gian làm bài! Bài làm sẽ được nộp tự động.');
+        gradeAndShow();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  // ---------- exam rendering ----------
+  function buildDots() {
+    var dots = document.getElementById('qDots');
+    dots.innerHTML = '';
+    state.pool.forEach(function (q, idx) {
+      var d = document.createElement('div');
+      d.className = 'q-dot';
+      d.textContent = idx + 1;
+      d.dataset.idx = idx;
+      d.addEventListener('click', function () {
+        goToQuestion(idx);
+      });
+      dots.appendChild(d);
+    });
+  }
+
+  // Khóa câu hiện tại (nếu đã chọn đáp án) rồi chuyển sang câu khác.
+  // Một khi đã rời khỏi câu hỏi, đáp án của câu đó không thể chỉnh sửa lại.
+  function goToQuestion(newIdx) {
+    if (newIdx === state.current) { return; }
+    if (state.answers[state.current] !== undefined) {
+      state.locked[state.current] = true;
+    }
+    state.current = newIdx;
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var idx = state.current;
+    var q = state.pool[idx];
+    var isLocked = !!state.locked[idx];
+    document.getElementById('metaCurrent').textContent = idx + 1;
+    document.getElementById('progressFill').style.width = (((idx + 1) / state.pool.length) * 100) + '%';
+    document.getElementById('qTag').textContent = 'Bậc ' + q.level + ' · Câu ' + (idx + 1) + ' / ' + state.pool.length;
+    document.getElementById('qText').textContent = q.question;
+
+    var optsWrap = document.getElementById('qOptions');
+    optsWrap.innerHTML = '';
+
+    var existingNote = document.getElementById('lockedNote');
+    if (existingNote) { existingNote.remove(); }
+    if (isLocked) {
+      var note = document.createElement('div');
+      note.className = 'locked-note';
+      note.id = 'lockedNote';
+      note.textContent = 'Câu này đã khóa — bạn đã chuyển câu nên không thể chọn lại đáp án khác.';
+      optsWrap.parentNode.insertBefore(note, optsWrap);
+    }
+
+    ['a', 'b', 'c', 'd'].forEach(function (key) {
+      if (!q[key]) { return; } // câu hỏi dạng Đúng/Sai chỉ có 2 lựa chọn, bỏ qua lựa chọn rỗng
+      var label = document.createElement('label');
+      label.className = 'option' + (state.answers[idx] === key ? ' selected' : '') + (isLocked ? ' locked' : '');
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'opt';
+      input.value = key;
+      input.checked = state.answers[idx] === key;
+      input.disabled = isLocked;
+      input.addEventListener('change', function () {
+        if (isLocked) { return; }
+        state.answers[idx] = key;
+        renderQuestion();
+        updateDots();
+      });
+      var span = document.createElement('span');
+      span.innerHTML = '<span class="key">' + key + '.</span> ' + escapeHtml(q[key]);
+      label.appendChild(input);
+      label.appendChild(span);
+      optsWrap.appendChild(label);
+    });
+
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === state.pool.length - 1;
+    updateDots();
+  }
+
+  function updateDots() {
+    var dots = document.getElementById('qDots').children;
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle('answered', state.answers[i] !== undefined);
+      dots[i].classList.toggle('current', i === state.current);
+    }
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function () {
+    if (state.current > 0) { goToQuestion(state.current - 1); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    if (state.current < state.pool.length - 1) { goToQuestion(state.current + 1); }
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var unanswered = state.pool.length - Object.keys(state.answers).length;
+    if (unanswered > 0) {
+      var ok = confirm('Bạn còn ' + unanswered + ' câu chưa trả lời. Những câu đó sẽ tính là sai. Nộp bài luôn?');
+      if (!ok) return;
+    }
+    gradeAndShow();
+  });
+
+  // ---------- grading ----------
+  function gradeAndShow() {
+    if (state.submitted) { return; } // chặn nộp bài 2 lần (ví dụ bấm Nộp bài đúng lúc hết giờ)
+    state.submitted = true;
+    stopTimer();
+    // Nộp bài xong: khóa toàn bộ câu hỏi, không cho sửa lại bất kỳ câu nào nữa.
+    state.pool.forEach(function (q, idx) { state.locked[idx] = true; });
+
+    var correctCount = 0;
+    var wrongList = [];
+    state.pool.forEach(function (q, idx) {
+      var picked = state.answers[idx];
+      if (picked === q.correct) {
+        correctCount++;
+      } else {
+        wrongList.push({ idx: idx, q: q, picked: picked || null });
+      }
+    });
+    var total = state.pool.length;
+    var wrongCount = total - correctCount;
+    var percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    var passed = percent >= PASS_THRESHOLD_PERCENT;
+
+    document.getElementById('examScreen').style.display = 'none';
+    document.getElementById('resultsScreen').style.display = 'block';
+
+    var banner = document.getElementById('resultBanner');
+    banner.className = 'result-banner ' + (passed ? 'pass' : 'fail');
+    document.getElementById('resultVerdict').textContent = passed ? 'ĐẠT' : 'KHÔNG ĐẠT';
+    document.getElementById('resultSub').textContent =
+      state.name + ' — Bậc ' + state.level + ' — ' + correctCount + '/' + total + ' câu đúng (' + percent + '%). Ngưỡng đạt: ' + PASS_THRESHOLD_PERCENT + '%.';
+
+    document.getElementById('statCorrect').textContent = correctCount;
+    document.getElementById('statWrong').textContent = wrongCount;
+    document.getElementById('statPercent').textContent = percent + '%';
+
+    var reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '';
+    if (wrongList.length === 0) {
+      var p = document.createElement('p');
+      p.style.color = 'var(--steel)';
+      p.textContent = 'Không có câu nào sai — làm đúng hết!';
+      reviewList.appendChild(p);
+    } else {
+      wrongList.forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'review-item';
+        var yourAnswerText = item.picked ? (item.picked + '. ' + item.q[item.picked]) : '(không trả lời)';
+        var correctAnswerText = item.q.correct + '. ' + item.q[item.q.correct];
+        div.innerHTML =
+          '<div class="q-text">Câu ' + (item.idx + 1) + ': ' + escapeHtml(item.q.question) + '</div>' +
+          '<div class="review-row your-wrong"><span class="tag">Bạn chọn:</span>' + escapeHtml(yourAnswerText) + '</div>' +
+          '<div class="review-row correct-answer"><span class="tag">Đáp án đúng:</span>' + escapeHtml(correctAnswerText) + '</div>';
+        reviewList.appendChild(div);
+      });
+    }
+
+    // store this attempt so it can be reviewed later (per-browser storage)
+    var saveStatusEl = document.getElementById('saveStatus');
+    try {
+      recordAttempt({
+        name: state.name,
+        level: state.level,
+        total: total,
+        correct: correctCount,
+        wrong: wrongCount,
+        percent: percent,
+        passed: passed,
+        timestamp: new Date().toISOString(),
+        wrongQuestions: wrongList.map(function (item) {
+          return { stt: item.q.stt, picked: item.picked, correct: item.q.correct };
+        })
+      });
+      saveStatusEl.classList.remove('error');
+      saveStatusEl.textContent = '✓ Đã lưu kết quả bài làm vào trình duyệt này.';
+    } catch (e) {
+      saveStatusEl.classList.add('error');
+      saveStatusEl.textContent = '⚠ Không lưu được kết quả (trình duyệt chặn lưu trữ cục bộ). Vui lòng chụp lại màn hình kết quả.';
+    }
+  }
+
+  document.getElementById('retakeBtn').addEventListener('click', function () {
+    stopTimer();
+    document.getElementById('resultsScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('candPass').value = '';
+  });
+
+  // ============================================================
+  // ---------- Admin: đăng nhập, xem/xuất/xóa dữ liệu thí sinh ----------
+  // Đây là cơ chế bảo vệ PHÍA TRÌNH DUYỆT (client-side) để thuận tiện,
+  // không phải bảo mật máy chủ thực sự. Bất kỳ ai có quyền xem mã nguồn
+  // trang đều có thể thấy ADMIN_PASSWORD, nên đừng dùng để bảo vệ dữ liệu
+  // thật sự quan trọng hay bí mật.
+  // ============================================================
+
+  document.getElementById('adminLoginLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminLoginScreen').style.display = 'block';
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminLoginMsg').textContent = '';
+  });
+
+  document.getElementById('adminBackLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  document.getElementById('adminLoginBtn').addEventListener('click', function () {
+    var pass = document.getElementById('adminPass').value;
+    if (pass !== ADMIN_PASSWORD) {
+      document.getElementById('adminLoginMsg').textContent = 'Sai mật khẩu Admin.';
+      return;
+    }
+    state.isAdmin = true;
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    renderAdminTable();
+  });
+
+  document.getElementById('adminLogoutBtn').addEventListener('click', function () {
+    state.isAdmin = false;
+    document.getElementById('adminScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
+  });
+
+  function fmtTimestamp(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString('vi-VN');
+    } catch (e) { return iso || ''; }
+  }
+
+  function renderAdminTable() {
+    var list = getCandidates();
+    var tbody = document.getElementById('adminTbody');
+    tbody.innerHTML = '';
+    if (list.length === 0) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="8" style="color:var(--steel);">Chưa có dữ liệu thí sinh nào được lưu trên trình duyệt này.</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+    list.forEach(function (rec, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(rec.name) + '</td>' +
+        '<td>' + escapeHtml(rec.level) + '</td>' +
+        '<td>' + escapeHtml(rec.correct) + '</td>' +
+        '<td>' + escapeHtml(rec.wrong) + '</td>' +
+        '<td>' + escapeHtml(rec.percent) + '%</td>' +
+        '<td class="' + (rec.passed ? 'pass-tag' : 'fail-tag') + '">' + (rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT') + '</td>' +
+        '<td>' + escapeHtml(fmtTimestamp(rec.timestamp)) + '</td>' +
+        '<td class="row-actions"></td>';
+      var actionsTd = tr.querySelector('.row-actions');
+
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.textContent = 'Sửa';
+      editBtn.addEventListener('click', function () { editCandidateRecord(i); });
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = 'Xóa';
+      delBtn.addEventListener('click', function () { deleteCandidateRecord(i); });
+
+      actionsTd.appendChild(editBtn);
+      actionsTd.appendChild(delBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Admin sửa lại số câu đúng đã ghi nhận cho một thí sinh (ví dụ khi cần
+  // hiệu chỉnh do lỗi chấm) — hệ thống tự tính lại số câu sai, tỷ lệ và kết quả đạt/không đạt.
+  function editCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var input = prompt('Nhập lại số câu đúng cho ' + rec.name + ' (tổng ' + rec.total + ' câu):', rec.correct);
+    if (input === null) { return; }
+    var newCorrect = parseInt(input, 10);
+    if (isNaN(newCorrect) || newCorrect < 0 || newCorrect > rec.total) {
+      alert('Giá trị không hợp lệ. Vui lòng nhập số từ 0 đến ' + rec.total + '.');
+      return;
+    }
+    rec.correct = newCorrect;
+    rec.wrong = rec.total - newCorrect;
+    rec.percent = rec.total > 0 ? Math.round((newCorrect / rec.total) * 100) : 0;
+    rec.passed = rec.percent >= PASS_THRESHOLD_PERCENT;
+    rec.editedByAdminAt = new Date().toISOString();
+    list[i] = rec;
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  function deleteCandidateRecord(i) {
+    var list = getCandidates();
+    var rec = list[i];
+    if (!rec) { return; }
+    var ok = confirm('Xóa kết quả của ' + rec.name + '? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    list.splice(i, 1);
+    saveCandidates(list);
+    renderAdminTable();
+  }
+
+  document.getElementById('clearAllBtn').addEventListener('click', function () {
+    var ok = confirm('Xóa TOÀN BỘ dữ liệu thí sinh đã lưu trên trình duyệt này? Hành động này không thể hoàn tác.');
+    if (!ok) { return; }
+    saveCandidates([]);
+    renderAdminTable();
+  });
+
+  document.getElementById('exportXlsxBtn').addEventListener('click', function () {
+    var warnEl = document.getElementById('xlsxWarning');
+    if (typeof XLSX === 'undefined') {
+      warnEl.style.display = 'block';
+      warnEl.textContent = '⚠ Không tải được thư viện xuất Excel (cần có kết nối internet). Vui lòng dùng nút "Tải danh sách (CSV)" — file CSV vẫn mở được trực tiếp bằng Excel.';
+      return;
+    }
+    warnEl.style.display = 'none';
+    var list = getCandidates();
+    var header = ['Họ tên', 'Bậc', 'Tổng số câu', 'Câu đúng', 'Câu sai', 'Tỷ lệ (%)', 'Kết quả', 'Thời gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'ĐẠT' : 'KHÔNG ĐẠT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [ { wch: 22 }, { wch: 6 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 } ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Danh sach thi sinh');
+    XLSX.writeFile(wb, 'danh-sach-thi-sinh.xlsx');
+  });
+
+  document.getElementById('exportCsvBtn').addEventListener('click', function () {
+    var list = getCandidates();
+    var header = ['Ho ten', 'Bac', 'Tong so cau', 'Cau dung', 'Cau sai', 'Ty le (%)', 'Ket qua', 'Thoi gian'];
+    var rows = [header];
+    list.forEach(function (rec) {
+      rows.push([
+        rec.name, rec.level, rec.total, rec.correct, rec.wrong, rec.percent,
+        rec.passed ? 'DAT' : 'KHONG DAT', fmtTimestamp(rec.timestamp)
+      ]);
+    });
+    var csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        var s = String(cell == null ? '' : cell);
+        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+          s = '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'danh-sach-thi-sinh.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------- In kết quả ----------
+  var printBtnEl = document.getElementById('printResultBtn');
+  if (printBtnEl) {
+    printBtnEl.addEventListener('click', function () {
+      var meta = document.getElementById('printMeta');
+      if (meta) {
+        var now = new Date();
+        var ts = now.toLocaleString('vi-VN');
+        meta.textContent = 'Ngày in: ' + ts;
+      }
+      window.print();
+    });
+  }
+</script>
+
+</body>
+</html>
